@@ -538,7 +538,7 @@ export default function App() {
 
       <nav className={`fixed left-0 right-0 top-0 z-50 px-4 py-4 sm:px-8 transition-all duration-500 ${showTop ? "bg-black/70 backdrop-blur-xl" : "bg-transparent"}`}>
         <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <a href="#home" className="text-[11px] font-black uppercase tracking-[0.4em] text-white/80" aria-label="Kembali ke atas">
+          <a href="#gallery" className="text-[11px] font-black uppercase tracking-[0.4em] text-white/80" aria-label="Ke galeri">
             Info Malam
           </a>
           <button
@@ -572,34 +572,13 @@ export default function App() {
         </div>
       )}
 
-      <section id="home" className="relative z-10 flex min-h-screen items-end overflow-hidden px-5 pb-16 pt-32 sm:px-8 lg:px-14 lg:pb-20">
-        <img src={activePhoto.url} alt={activePhoto.public_id} className="absolute inset-0 h-full w-full object-cover transition duration-1000" style={{ transform: `translateY(${scrollY * 0.2}px)` }} />
-        <div className="absolute inset-0 bg-black/50" />
-        <div className="absolute inset-0 opacity-20" style={{ background: `linear-gradient(135deg, ${color1}, transparent 40%, ${color2})` }} />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-black/30 to-transparent" />
-        <div className="relative z-10 mx-auto w-full max-w-7xl">
-          <div className="mb-5 flex items-center gap-3">
-            <span className="h-2 w-2 animate-pulse rounded-full" style={{ background: color1, boxShadow: `0 0 15px ${color1}` }} />
-            <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-white/40">2026 / Indonesia</p>
-          </div>
-          <h1 className="text-[19vw] font-black leading-[0.76] tracking-[-0.09em] sm:text-[13vw] lg:text-[10rem]" style={{ textShadow: `0 0 50px ${color1}20` }}>
-            Malam<br />
-            <span className="inline-block text-white" style={{ textShadow: `0 0 15px ${color1}40, 0 0 35px ${color2}20`, letterSpacing: "-0.04em" }}>Bersama.</span>
-          </h1>
-          <div className="mt-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-            <p className="max-w-xl text-base leading-7 text-white/50 sm:text-lg">Kumpulan momen, teman, dan cerita yang tersimpan dalam satu arsip malam.</p>
-            <button onClick={randomPhoto} aria-label="Lihat foto acak" className="w-fit rounded-full px-7 py-4 text-xs font-black uppercase tracking-[0.22em] text-black transition hover:-translate-y-1 hover:scale-105" style={{ background: `linear-gradient(90deg, ${color1}, ${color2})`, boxShadow: `0 0 30px ${color1}25` }}>
-              Foto Acak ↗
-            </button>
-          </div>
-        </div>
-      </section>
+      {/* SECTION HOME DIHAPUS - LANGSUNG KE GALLERY */}
 
       <section id="gallery" className="relative z-10 px-5 py-20 sm:px-8 lg:px-14 lg:py-32">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 flex items-end justify-between">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/25">02 — Gallery</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/25">01 — Gallery</p>
               <h2 className="mt-4 text-5xl font-black tracking-[-0.06em] sm:text-7xl">
                 Semua<br />
                 <span style={{ color: color1, textShadow: `0 0 25px ${color1}25` }}>cerita.</span>
@@ -612,7 +591,6 @@ export default function App() {
 
           <StoryBar photos={photos} activeIndex={activeIndex} rgb={rgb} onSelect={openPhoto} />
 
-          {/* GRID FOTO - SEMUA SAMA UKURAN */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
             {photos.map((photo, index) => (
               <GalleryItem
@@ -639,7 +617,7 @@ export default function App() {
       <section className="relative z-10 border-t border-white/10 px-5 py-24 sm:px-8 lg:px-14 lg:py-32">
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.35fr_1fr] lg:items-center">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/25">03 — Featured</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/25">02 — Featured</p>
             <h2 className="mt-5 text-5xl font-black tracking-[-0.06em] sm:text-7xl">
               Moment<br />
               <span style={{ color: color2, textShadow: `0 0 25px ${color2}25` }}>#{String(activeIndex + 1).padStart(2, "0")}</span>
