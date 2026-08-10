@@ -1,13 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  memo,
+} from "react";
 import { photos, type Photo } from "./photo";
 
 /* =========================
    SCROLL REVEAL HOOK
-   Watches an element and flips `inView` to true the moment it
-   scrolls into the viewport (once) — used to fade/slide photos in
-   smoothly instead of them just popping in.
 ========================= */
-
 function useInView<T extends HTMLElement>() {
   const ref = useRef<T | null>(null);
   const [inView, setInView] = useState(false);
@@ -27,7 +30,6 @@ function useInView<T extends HTMLElement>() {
     );
 
     observer.observe(el);
-
     return () => observer.disconnect();
   }, []);
 
@@ -36,10 +38,7 @@ function useInView<T extends HTMLElement>() {
 
 /* =========================
    GALLERY ITEM
-   Wrapping each photo in its own component lets each one own its
-   own IntersectionObserver + hook instance.
 ========================= */
-
 const GalleryItem = memo(function GalleryItem({
   photo,
   index,
@@ -62,15 +61,10 @@ const GalleryItem = memo(function GalleryItem({
   const onVisibleRef = useRef(onVisible);
   onVisibleRef.current = onVisible;
 
-  // Notify parent when this item becomes visible
   useEffect(() => {
-    if (inView) {
-      onVisibleRef.current(index);
-    }
+    if (inView) onVisibleRef.current(index);
   }, [inView, index]);
 
-  // Each frame's rainbow rotates at a slightly different phase so
-  // the whole grid doesn't pulse in unison.
   const frameAngle = (rgb + index * 47) % 360;
   const frameA = `hsl(${frameAngle}, 100%, 65%)`;
   const frameB = `hsl(${(frameAngle + 90) % 360}, 100%, 65%)`;
@@ -82,11 +76,9 @@ const GalleryItem = memo(function GalleryItem({
       ref={ref}
       onClick={() => onOpen(photo)}
       aria-label={`Lihat foto ${index + 1}`}
-      className={`
-        group relative rounded-[20px] p-[3px]
-        text-left
-        ${big ? "col-span-2 row-span-2" : ""}
-      `}
+      className={`group relative rounded-[20px] p-[3px] text-left ${
+        big ? "col-span-2 row-span-2" : ""
+      }`}
       style={{
         background: `conic-gradient(from ${frameAngle}deg, ${frameA}, ${frameB}, ${frameC}, ${frameD}, ${frameA})`,
         boxShadow: isActive
@@ -104,7 +96,6 @@ const GalleryItem = memo(function GalleryItem({
     >
       <div className="relative overflow-hidden rounded-[17px] bg-[#050507]">
         <div className="aspect-[4/5] overflow-hidden bg-[#1a1a2e]">
-          {/* Skeleton shimmer sebelum gambar dimuat */}
           {!imageLoaded && (
             <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-[#1a1a2e] via-[#2a2a4a] to-[#1a1a2e] bg-[length:200%_100%]" />
           )}
@@ -118,7 +109,6 @@ const GalleryItem = memo(function GalleryItem({
             }`}
           />
         </div>
-
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
         <div className="absolute bottom-4 left-4">
           <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/60">
@@ -130,6 +120,9 @@ const GalleryItem = memo(function GalleryItem({
   );
 });
 
+/* =========================
+   APP
+========================= */
 export default function App() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [selected, setSelected] = useState<Photo | null>(null);
@@ -139,35 +132,30 @@ export default function App() {
   const [scrollY, setScrollY] = useState(0);
   const [visibleIndices, setVisibleIndices] = useState<Set<number>>(new Set());
 
-  /* =========================
-     WELCOME
-  ========================= */
+  // Fitur baru
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [typedBuffer, setTypedBuffer] = useState("");
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
 
+  // Welcome
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowWelcome(false);
-    }, 1800);
+    const timer = setTimeout(() => setShowWelcome(false), 1800);
     return () => clearTimeout(timer);
   }, []);
 
-  /* =========================
-     RGB ANIMATION
-  ========================= */
-
+  // RGB Animation
   useEffect(() => {
     let frame: number;
     const animate = () => {
-      setRgb((value) => (value + 0.12) % 360);
+      setRgb((v) => (v + 0.12) % 360);
       frame = requestAnimationFrame(animate);
     };
     frame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  /* =========================
-     SCROLL
-  ========================= */
-
+  // Scroll
   useEffect(() => {
     const handleScroll = () => {
       const y = window.scrollY;
@@ -178,25 +166,57 @@ export default function App() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  /* =========================
-     KEYBOARD
-  ========================= */
-
+  // Keyboard (lightbox + easter egg)
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (!selected) return;
-      if (e.key === "Escape") setSelected(null);
-      if (e.key === "ArrowRight") nextPhoto();
-      if (e.key === "ArrowLeft") previousPhoto();
+      // Lightbox
+      if (selected) {
+        if (e.key === "Escape") setSelected(null);
+        if (e.key === "ArrowRight") nextPhoto();
+        if (e.key === "ArrowLeft") previousPhoto();
+        return;
+      }
+
+      // Easter egg: deteksi "MALAM"
+      const key = e.key.toUpperCase();
+      if (key === "M" || key === "A" || key === "L") {
+        setTypedBuffer((prev) => {
+          const next = prev + key;
+          if (next === "MALAM") {
+            setShowEasterEgg(true);
+            setTimeout(() => setShowEasterEgg(false), 5000);
+            return "";
+          }
+          if (!next.startsWith("MALAM")) return key === "M" ? key : "";
+          return next;
+        });
+      } else {
+        setTypedBuffer("");
+      }
     };
+
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [selected, activeIndex]);
 
-  /* =========================
-     VISIBLE CALLBACK (untuk progress bar)
-  ========================= */
+  // Music toggle
+  const toggleMusic = () => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio("/night-ambience.mp3");
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0.3;
+    }
+    if (isMusicPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(() => {
+        // fallback: autoplay mungkin diblok
+      });
+    }
+    setIsMusicPlaying(!isMusicPlaying);
+  };
 
+  // Visible callback
   const handleVisible = useCallback((index: number) => {
     setVisibleIndices((prev) => {
       if (prev.has(index)) return prev;
@@ -206,18 +226,11 @@ export default function App() {
     });
   }, []);
 
-  /* =========================
-     COLORS
-  ========================= */
-
+  // Colors
   const color1 = `hsl(${rgb}, 100%, 65%)`;
   const color2 = `hsl(${(rgb + 110) % 360}, 100%, 65%)`;
 
-  /* =========================
-     STARS
-     Generated once so they don't jump around on re-render.
-  ========================= */
-
+  // Stars
   const stars = useMemo(() => {
     return Array.from({ length: 50 }, (_, i) => ({
       id: i,
@@ -228,10 +241,6 @@ export default function App() {
       duration: Math.random() * 3 + 2.5,
     }));
   }, []);
-
-  /* =========================
-     GUARD: NO PHOTOS
-  ========================= */
 
   if (!photos || photos.length === 0) {
     return (
@@ -248,16 +257,8 @@ export default function App() {
     );
   }
 
-  /* =========================
-     PHOTO
-  ========================= */
-
   const activePhoto = photos[activeIndex];
   const bigIndex = 0;
-
-  /* =========================
-     RANDOM
-  ========================= */
 
   const randomPhoto = () => {
     let next = Math.floor(Math.random() * photos.length);
@@ -268,29 +269,17 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  /* =========================
-     NEXT
-  ========================= */
-
   function nextPhoto() {
     const next = (activeIndex + 1) % photos.length;
     setActiveIndex(next);
     setSelected(photos[next]);
   }
 
-  /* =========================
-     PREVIOUS
-  ========================= */
-
   function previousPhoto() {
-    const previous = (activeIndex - 1 + photos.length) % photos.length;
-    setActiveIndex(previous);
-    setSelected(photos[previous]);
+    const prev = (activeIndex - 1 + photos.length) % photos.length;
+    setActiveIndex(prev);
+    setSelected(photos[prev]);
   }
-
-  /* =========================
-     OPEN PHOTO
-  ========================= */
 
   const openPhoto = (photo: Photo) => {
     const index = photos.findIndex((p) => p.public_id === photo.public_id);
@@ -298,11 +287,69 @@ export default function App() {
     setSelected(photo);
   };
 
+  // Kartu pos
+  const downloadPostcard = () => {
+    if (!selected) return;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = selected.url;
+    img.onload = () => {
+      const width = 1200;
+      const height = 1600;
+      canvas.width = width;
+      canvas.height = height;
+
+      // Background hitam
+      ctx.fillStyle = "#0a0a0a";
+      ctx.fillRect(0, 0, width, height);
+
+      // Foto dengan margin
+      const margin = 80;
+      const imgWidth = width - margin * 2;
+      const imgHeight = (img.height / img.width) * imgWidth;
+      const yOffset = (height - imgHeight) / 2 - 40;
+      ctx.drawImage(img, margin, yOffset, imgWidth, imgHeight);
+
+      // Bingkai garis tipis
+      ctx.strokeStyle = "#ffffff30";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(margin, yOffset, imgWidth, imgHeight);
+
+      // Teks
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 48px 'Inter', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Info Malam", width / 2, height - 120);
+
+      ctx.font = "28px 'Inter', sans-serif";
+      ctx.fillStyle = "#ffffff60";
+      ctx.fillText("2026 / Indonesia", width / 2, height - 70);
+
+      if ((selected as any).caption) {
+        ctx.font = "italic 32px 'Inter', sans-serif";
+        ctx.fillStyle = "#ffffff90";
+        ctx.fillText((selected as any).caption, width / 2, height - 190);
+      }
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `info-malam-${selected.public_id}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }, "image/png");
+    };
+  };
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#050507] text-white">
-      {/* ==================================================
-          AMBIENT RGB
-      ================================================== */}
+      {/* Ambient RGB */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div
           className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full blur-[160px] opacity-[0.08]"
@@ -318,9 +365,7 @@ export default function App() {
         />
       </div>
 
-      {/* ==================================================
-          STARS
-      ================================================== */}
+      {/* Stars */}
       <div className="pointer-events-none fixed inset-0 z-[1] overflow-hidden">
         {stars.map((star) => (
           <div
@@ -337,9 +382,7 @@ export default function App() {
         ))}
       </div>
 
-      {/* ==================================================
-          FILM GRAIN
-      ================================================== */}
+      {/* Film grain */}
       <div
         className="pointer-events-none fixed inset-0 z-[80] opacity-[0.05] mix-blend-overlay"
         style={{
@@ -363,25 +406,40 @@ export default function App() {
           80% { transform: translate(-4%, 0); }
           90% { transform: translate(4%, 4%); }
         }
-
         @keyframes twinkle {
           0%, 100% { opacity: 0.15; transform: scale(1); }
           50% { opacity: 0.9; transform: scale(1.4); }
         }
-
         @keyframes shimmer {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
         }
-
         .animate-shimmer {
           animation: shimmer 1.6s ease-in-out infinite;
         }
+        @keyframes glitch {
+          0% { clip-path: inset(20% 0 60% 0); transform: translate(-5px, 2px); opacity: 0.8; }
+          20% { clip-path: inset(40% 0 30% 0); transform: translate(5px, -2px); opacity: 0.6; }
+          40% { clip-path: inset(10% 0 70% 0); transform: translate(-3px, 1px); opacity: 0.7; }
+          60% { clip-path: inset(50% 0 20% 0); transform: translate(6px, -3px); opacity: 0.9; }
+          80% { clip-path: inset(30% 0 50% 0); transform: translate(-4px, 3px); opacity: 0.5; }
+          100% { clip-path: inset(0% 0 0% 0); transform: translate(0); opacity: 1; }
+        }
+        .glitch-overlay {
+          animation: glitch 0.3s ease-out;
+          position: absolute;
+          inset: 0;
+          background: rgba(255,255,255,0.05);
+          pointer-events: none;
+          z-index: 20;
+        }
+        @keyframes meteor {
+          0% { transform: translateY(-100px) translateX(100vw); opacity: 1; }
+          100% { transform: translateY(100vh) translateX(-100vw); opacity: 0; }
+        }
       `}</style>
 
-      {/* ==================================================
-          WELCOME
-      ================================================== */}
+      {/* Welcome */}
       {showWelcome && (
         <div className="fixed inset-0 z-[999] grid place-items-center bg-[#050507]">
           <div
@@ -413,9 +471,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ==================================================
-          NAVBAR
-      ================================================== */}
+      {/* Navbar */}
       <nav
         className={`fixed left-0 right-0 top-0 z-50 px-4 py-4 sm:px-8 transition-all duration-500 ${
           showTop ? "bg-black/70 backdrop-blur-xl" : "bg-transparent"
@@ -423,7 +479,9 @@ export default function App() {
       >
         <div
           className={`mx-auto flex max-w-7xl items-center justify-center rounded-full border px-5 py-2.5 backdrop-blur-xl transition-all duration-500 ${
-            showTop ? "bg-black/40 border-white/10" : "bg-transparent border-transparent"
+            showTop
+              ? "bg-black/40 border-white/10"
+              : "bg-transparent border-transparent"
           }`}
           style={{
             borderColor: showTop ? `${color1}20` : "transparent",
@@ -439,9 +497,40 @@ export default function App() {
         </div>
       </nav>
 
-      {/* ==================================================
-          HERO
-      ================================================== */}
+      {/* Music toggle */}
+      <button
+        onClick={toggleMusic}
+        aria-label={isMusicPlaying ? "Matikan musik" : "Nyalakan musik"}
+        className="fixed bottom-20 right-5 z-50 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white/70 backdrop-blur-xl transition hover:text-white"
+      >
+        {isMusicPlaying ? "🔊" : "🔇"}
+      </button>
+
+      {/* Easter egg */}
+      {showEasterEgg && (
+        <div className="pointer-events-none fixed inset-0 z-[200] overflow-hidden">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute h-1 w-1 rounded-full bg-white"
+              style={{
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                animation: `meteor ${2 + Math.random() * 3}s linear ${Math.random()}s infinite`,
+                opacity: 0.8,
+                boxShadow: "0 0 6px #fff",
+              }}
+            />
+          ))}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <h2 className="text-4xl font-black text-white animate-pulse">
+              MALAM 🌙
+            </h2>
+          </div>
+        </div>
+      )}
+
+      {/* Hero */}
       <section
         id="home"
         className="relative z-10 flex min-h-screen items-end overflow-hidden px-5 pb-16 pt-32 sm:px-8 lg:px-14 lg:pb-20"
@@ -460,21 +549,16 @@ export default function App() {
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-black/30 to-transparent" />
-
         <div className="relative z-10 mx-auto w-full max-w-7xl">
           <div className="mb-5 flex items-center gap-3">
             <span
               className="h-2 w-2 animate-pulse rounded-full"
-              style={{
-                background: color1,
-                boxShadow: `0 0 15px ${color1}`,
-              }}
+              style={{ background: color1, boxShadow: `0 0 15px ${color1}` }}
             />
             <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-white/40">
               2026 / Indonesia
             </p>
           </div>
-
           <h1
             className="text-[19vw] font-black leading-[0.76] tracking-[-0.09em] sm:text-[13vw] lg:text-[10rem]"
             style={{ textShadow: `0 0 50px ${color1}20` }}
@@ -484,21 +568,16 @@ export default function App() {
             <span
               className="inline-block text-white"
               style={{
-                textShadow: `
-                  0 0 15px ${color1}40,
-                  0 0 35px ${color2}20
-                `,
+                textShadow: `0 0 15px ${color1}40, 0 0 35px ${color2}20`,
                 letterSpacing: "-0.04em",
               }}
             >
               Bersama.
             </span>
           </h1>
-
           <div className="mt-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <p className="max-w-xl text-base leading-7 text-white/50 sm:text-lg">
-              Kumpulan momen, teman, dan cerita yang tersimpan dalam satu arsip
-              malam.
+              Kumpulan momen, teman, dan cerita yang tersimpan dalam satu arsip malam.
             </p>
             <button
               onClick={randomPhoto}
@@ -515,9 +594,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* ==================================================
-          GALLERY
-      ================================================== */}
+      {/* Gallery */}
       <section
         id="gallery"
         className="relative z-10 px-5 py-20 sm:px-8 lg:px-14 lg:py-32"
@@ -549,8 +626,6 @@ export default function App() {
               Random
             </button>
           </div>
-
-          {/* PHOTO GRID */}
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-8 lg:gap-10">
             {photos.map((photo, index) => (
               <GalleryItem
@@ -565,8 +640,6 @@ export default function App() {
               />
             ))}
           </div>
-
-          {/* PROGRESS BAR – seberapa banyak foto sudah terlihat */}
           <div className="mt-10 flex items-center gap-4">
             <div className="h-1.5 flex-1 rounded-full bg-white/5">
               <div
@@ -584,9 +657,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* ==================================================
-          FEATURED
-      ================================================== */}
+      {/* Featured */}
       <section className="relative z-10 border-t border-white/10 px-5 py-24 sm:px-8 lg:px-14 lg:py-32">
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.35fr_1fr] lg:items-center">
           <div>
@@ -620,7 +691,6 @@ export default function App() {
               Buka fullscreen
             </button>
           </div>
-
           <button
             onClick={() => setSelected(activePhoto)}
             aria-label="Lihat foto featured"
@@ -635,19 +705,14 @@ export default function App() {
         </div>
       </section>
 
-      {/* ==================================================
-          FOOTER
-      ================================================== */}
+      {/* Footer */}
       <footer className="relative z-10 border-t border-white/10 px-5 py-12 sm:px-8 lg:px-14">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-lg font-black">Info Malam.</p>
           <div className="flex items-center gap-3">
             <span
               className="h-2 w-2 animate-pulse rounded-full"
-              style={{
-                background: color1,
-                boxShadow: `0 0 15px ${color1}`,
-              }}
+              style={{ background: color1, boxShadow: `0 0 15px ${color1}` }}
             />
             <p className="text-[10px] uppercase tracking-[0.3em] text-white/20">
               Made from memories — 2026
@@ -656,9 +721,7 @@ export default function App() {
         </div>
       </footer>
 
-      {/* ==================================================
-          BACK TO TOP
-      ================================================== */}
+      {/* Back to top */}
       {showTop && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
@@ -669,79 +732,155 @@ export default function App() {
         </button>
       )}
 
-      {/* ==================================================
-          LIGHTBOX
-      ================================================== */}
+      {/* LIGHTBOX (dengan caption, glitch, download) */}
       {selected && (
-        <div
-          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/95 p-4 backdrop-blur-2xl"
-          onClick={() => setSelected(null)}
-        >
-          <div
-            className="absolute inset-0 opacity-[0.08]"
-            style={{
-              background: `radial-gradient(circle at center, ${color1}, transparent 60%)`,
-            }}
-          />
-
-          {/* CLOSE */}
-          <button
-            onClick={() => setSelected(null)}
-            aria-label="Tutup lightbox"
-            className="absolute right-5 top-5 z-30 rounded-full border border-white/10 bg-black/60 px-5 py-3 text-xs font-bold uppercase tracking-widest text-white/70 backdrop-blur-xl"
-          >
-            Tutup ×
-          </button>
-
-          {/* PREVIOUS */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              previousPhoto();
-            }}
-            aria-label="Foto sebelumnya"
-            className="absolute left-3 z-30 rounded-full border border-white/10 bg-black/60 px-4 py-3 text-xl text-white/70 backdrop-blur-xl transition hover:text-white sm:left-6"
-          >
-            ‹
-          </button>
-
-          {/* IMAGE */}
-          <img
-            src={selected.url}
-            alt="Fullscreen"
-            onClick={(e) => e.stopPropagation()}
-            className="relative z-10 max-h-[85vh] max-w-[85vw] rounded-2xl border border-white/10 object-contain"
-            style={{
-              boxShadow: `0 0 80px ${color1}15`,
-            }}
-          />
-
-          {/* NEXT */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              nextPhoto();
-            }}
-            aria-label="Foto selanjutnya"
-            className="absolute right-3 z-30 rounded-full border border-white/10 bg-black/60 px-4 py-3 text-xl text-white/70 backdrop-blur-xl transition hover:text-white sm:right-6"
-          >
-            ›
-          </button>
-
-          {/* CAPTION (jika ada) */}
-          {(selected as Photo & { caption?: string }).caption && (
-            <div className="absolute bottom-20 left-1/2 z-30 max-w-[85vw] -translate-x-1/2 text-center text-sm text-white/60">
-              {(selected as Photo & { caption?: string }).caption}
-            </div>
-          )}
-
-          {/* COUNTER */}
-          <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2 rounded-full border border-white/10 bg-black/60 px-5 py-2 text-[10px] font-bold tracking-[0.3em] text-white/50 backdrop-blur-xl">
-            {String(activeIndex + 1).padStart(2, "0")} /{" "}
-            {String(photos.length).padStart(2, "0")}
-          </div>
-        </div>
+        <Lightbox
+          selected={selected}
+          photos={photos}
+          activeIndex={activeIndex}
+          color1={color1}
+          onClose={() => setSelected(null)}
+          onPrev={previousPhoto}
+          onNext={nextPhoto}
+          onDownload={downloadPostcard}
+        />
       )}
     </main>
+  );
+}
+
+/* =========================
+   LIGHTBOX COMPONENT
+========================= */
+function Lightbox({
+  selected,
+  photos,
+  activeIndex,
+  color1,
+  onClose,
+  onPrev,
+  onNext,
+  onDownload,
+}: {
+  selected: Photo;
+  photos: Photo[];
+  activeIndex: number;
+  color1: string;
+  onClose: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+  onDownload: () => void;
+}) {
+  const [glitchKey, setGlitchKey] = useState(0);
+  const [displayedCaption, setDisplayedCaption] = useState("");
+  const captionRef = useRef<string | undefined>(undefined);
+
+  // Glitch effect saat selected berubah
+  useEffect(() => {
+    setGlitchKey((k) => k + 1);
+  }, [selected.public_id]);
+
+  // Typewriter caption
+  useEffect(() => {
+    const fullCaption =
+      (selected as Photo & { caption?: string }).caption || "";
+    if (!fullCaption) {
+      setDisplayedCaption("");
+      return;
+    }
+
+    let index = 0;
+    setDisplayedCaption("");
+    const interval = setInterval(() => {
+      setDisplayedCaption(fullCaption.slice(0, index + 1));
+      index++;
+      if (index >= fullCaption.length) clearInterval(interval);
+    }, 40);
+    return () => clearInterval(interval);
+  }, [selected.public_id]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/95 p-4 backdrop-blur-2xl"
+      onClick={onClose}
+    >
+      <div
+        className="absolute inset-0 opacity-[0.08]"
+        style={{
+          background: `radial-gradient(circle at center, ${color1}, transparent 60%)`,
+        }}
+      />
+
+      {/* Glitch overlay */}
+      <div key={glitchKey} className="glitch-overlay" />
+
+      {/* Close */}
+      <button
+        onClick={onClose}
+        aria-label="Tutup lightbox"
+        className="absolute right-5 top-5 z-30 rounded-full border border-white/10 bg-black/60 px-5 py-3 text-xs font-bold uppercase tracking-widest text-white/70 backdrop-blur-xl"
+      >
+        Tutup ×
+      </button>
+
+      {/* Previous */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onPrev();
+        }}
+        aria-label="Foto sebelumnya"
+        className="absolute left-3 z-30 rounded-full border border-white/10 bg-black/60 px-4 py-3 text-xl text-white/70 backdrop-blur-xl transition hover:text-white sm:left-6"
+      >
+        ‹
+      </button>
+
+      {/* Image */}
+      <img
+        src={selected.url}
+        alt="Fullscreen"
+        onClick={(e) => e.stopPropagation()}
+        className="relative z-10 max-h-[85vh] max-w-[85vw] rounded-2xl border border-white/10 object-contain"
+        style={{ boxShadow: `0 0 80px ${color1}15` }}
+      />
+
+      {/* Next */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onNext();
+        }}
+        aria-label="Foto selanjutnya"
+        className="absolute right-3 z-30 rounded-full border border-white/10 bg-black/60 px-4 py-3 text-xl text-white/70 backdrop-blur-xl transition hover:text-white sm:right-6"
+      >
+        ›
+      </button>
+
+      {/* Caption typewriter */}
+      {displayedCaption && (
+        <div className="absolute bottom-20 left-1/2 z-30 max-w-[85vw] -translate-x-1/2 text-center text-sm text-white/60 italic">
+          {displayedCaption}
+          <span className="animate-pulse">|</span>
+        </div>
+      )}
+
+      {/* Download button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDownload();
+        }}
+        aria-label="Download kartu pos"
+        className="absolute bottom-6 left-6 z-30 rounded-full border border-white/10 bg-black/60 px-4 py-2 text-xs font-bold uppercase tracking-widest text-white/70 backdrop-blur-xl transition hover:text-white"
+      >
+        📮 Kartu Pos
+      </button>
+
+      {/* Counter */}
+      <div className="absolute bottom-6 right-6 z-30 rounded-full border border-white/10 bg-black/60 px-5 py-2 text-[10px] font-bold tracking-[0.3em] text-white/50 backdrop-blur-xl">
+        {String(activeIndex + 1).padStart(2, "0")} /{" "}
+        {String(photos.length).padStart(2, "0")}
+      </div>
+    </div>
   );
 }
