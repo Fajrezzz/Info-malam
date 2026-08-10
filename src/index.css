@@ -1,4 +1,16 @@
-@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Inter", system-ui, sans-serif;
+  background: #080808;
+  color: white;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
 
 html {
   scroll-behavior: smooth;
@@ -6,84 +18,344 @@ html {
 
 body {
   margin: 0;
-  background: #08090f;
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  min-width: 320px;
+  background: #080808;
 }
 
-@keyframes welcomeFade {
-  0%,
-  78% {
-    opacity: 1;
-    visibility: visible;
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: white;
+  color: black;
+}
+
+/* =========================
+   WELCOME
+========================= */
+
+.welcome-screen {
+  animation: welcomeOut 0.8s ease 1.8s forwards;
+}
+
+.welcome-content {
+  animation: welcomeIn 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.logo-mark {
+  display: flex;
+  width: 70px;
+  height: 70px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+}
+
+@keyframes welcomeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  100% {
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes welcomeOut {
+  to {
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
   }
 }
 
-@keyframes welcomeRise {
+/* =========================
+   HERO
+========================= */
+
+.hero-image {
+  animation: heroZoom 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: scale(1.02);
+}
+
+@keyframes heroZoom {
   from {
     opacity: 0;
-    transform: translateY(20px) scale(0.98);
+    transform: scale(1.08);
   }
+
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1.02);
   }
 }
 
-@keyframes slowZoom {
+.hero-title {
+  animation: titleIn 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes titleIn {
   from {
-    transform: scale(1.04);
+    opacity: 0;
+    transform: translateY(35px);
   }
+
   to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   GRAIN
+========================= */
+
+.grain {
+  opacity: 0.08;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* =========================
+   NAV
+========================= */
+
+.small-logo {
+  display: flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.nav-link {
+  position: relative;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: white;
+}
+
+.nav-link::after {
+  position: absolute;
+  bottom: -7px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: white;
+  content: "";
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.primary-button,
+.glass-button,
+.random-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 999px;
+  padding: 15px 23px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  transition:
+    transform 0.3s ease,
+    background 0.3s ease,
+    color 0.3s ease;
+}
+
+.primary-button {
+  background: white;
+  color: #080808;
+}
+
+.primary-button:hover {
+  transform: translateY(-3px);
+  background: #e5e5e5;
+}
+
+.glass-button {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  backdrop-filter: blur(15px);
+}
+
+.glass-button:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.random-button {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: white;
+  color: #080808;
+  padding: 18px 28px;
+}
+
+.random-button:hover {
+  transform: translateY(-4px) rotate(-1deg);
+}
+
+/* =========================
+   SECTIONS
+========================= */
+
+.section-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* =========================
+   FEATURED
+========================= */
+
+.featured-photo {
+  border-radius: 2px;
+}
+
+.featured-photo::after {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  content: "";
+  pointer-events: none;
+}
+
+/* =========================
+   THUMBNAILS
+========================= */
+
+.thumbnail {
+  border: 1px solid transparent;
+  opacity: 0.55;
+  transition:
+    opacity 0.3s ease,
+    border 0.3s ease,
+    transform 0.3s ease;
+}
+
+.thumbnail:hover {
+  opacity: 0.9;
+}
+
+.thumbnail.active-thumbnail {
+  border-color: rgba(255, 255, 255, 0.9);
+  opacity: 1;
+}
+
+.thumbnail.active-thumbnail::after {
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  content: "";
+  pointer-events: none;
+}
+
+/* =========================
+   RANDOM
+========================= */
+
+.random-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* =========================
+   LIGHTBOX
+========================= */
+
+.lightbox {
+  animation: lightboxIn 0.3s ease;
+}
+
+.lightbox-content {
+  animation: lightboxImage 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes lightboxIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lightboxImage {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
     transform: scale(1);
   }
 }
 
-@keyframes copyIn {
-  from {
-    opacity: 0;
-    transform: translateY(26px);
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 640px) {
+  .hero-section {
+    min-height: 100svh;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .hero-image {
+    object-position: center;
+  }
+
+  .featured-photo {
+    height: 60svh;
+  }
+
+  .primary-button,
+  .glass-button {
+    padding: 14px 19px;
   }
 }
 
-@keyframes imageReveal {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.welcome-panel {
-  animation: welcomeFade 2.7s ease forwards;
-}
-
-.welcome-content {
-  animation: welcomeRise 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-
-.hero-photo {
-  animation: slowZoom 1400ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-
-.hero-copy {
-  animation: copyIn 850ms 250ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-
-.image-choice {
-  animation: imageReveal 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
+/* =========================
+   REDUCE MOTION
+========================= */
 
 @media (prefers-reduced-motion: reduce) {
   *,
