@@ -30,7 +30,7 @@ function useInView<T extends HTMLElement>() {
 }
 
 /* =========================
-   GALLERY ITEM (tanpa big)
+   GALLERY ITEM (semua ukuran sama)
 ========================= */
 const GalleryItem = memo(function GalleryItem({
   photo,
@@ -183,15 +183,14 @@ function StoryBar({
 function SpeakerIcon({ playing }: { playing: boolean }) {
   return (
     <svg
-      width="24"
-      height="24"
+      width="22"
+      height="22"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="transition-colors"
     >
       <path d="M11 5L6 9H2v6h4l5 4V5z" />
       {playing && (
@@ -548,7 +547,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Navbar dengan tombol musik besar di kanan atas */}
+      {/* Navbar dengan tombol musik besar */}
       <nav
         className={`fixed left-0 right-0 top-0 z-50 px-4 py-4 sm:px-8 transition-all duration-500 ${
           showTop ? "bg-black/70 backdrop-blur-xl" : "bg-transparent"
@@ -565,7 +564,7 @@ export default function App() {
           <button
             onClick={toggleMusic}
             aria-label={isMusicPlaying ? "Matikan musik" : "Nyalakan musik"}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/80 backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/80 backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
           >
             <SpeakerIcon playing={isMusicPlaying} />
           </button>
@@ -589,7 +588,9 @@ export default function App() {
             />
           ))}
           <div className="absolute inset-0 flex items-center justify-center">
-            <h2 className="text-4xl font-black text-white animate-pulse">MALAM 🌙</h2>
+            <h2 className="text-4xl font-black text-white animate-pulse">
+              MALAM 🌙
+            </h2>
           </div>
         </div>
       )}
@@ -617,7 +618,10 @@ export default function App() {
           <div className="mb-5 flex items-center gap-3">
             <span
               className="h-2 w-2 animate-pulse rounded-full"
-              style={{ background: color1, boxShadow: `0 0 15px ${color1}` }}
+              style={{
+                background: color1,
+                boxShadow: `0 0 15px ${color1}`,
+              }}
             />
             <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-white/40">
               2026 / Indonesia
@@ -700,7 +704,7 @@ export default function App() {
             onSelect={openPhoto}
           />
 
-          {/* Grid semua foto seragam, tidak ada big */}
+          {/* Grid foto (semua ukuran sama) */}
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-8 lg:gap-10">
             {photos.map((photo, index) => (
               <GalleryItem
@@ -788,7 +792,10 @@ export default function App() {
           <div className="flex items-center gap-3">
             <span
               className="h-2 w-2 animate-pulse rounded-full"
-              style={{ background: color1, boxShadow: `0 0 15px ${color1}` }}
+              style={{
+                background: color1,
+                boxShadow: `0 0 15px ${color1}`,
+              }}
             />
             <p className="text-[10px] uppercase tracking-[0.3em] text-white/20">
               Made from memories — 2026
