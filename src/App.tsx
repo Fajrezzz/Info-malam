@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { photos, type Photo } from "./photo";
 
-const CATEGORIES = ["WATCH", "EXPERIENCE", "RANDOM", "GAMES", "ABOUT", "PRIVATE", "LOVE"];
+const CATEGORIES = [
+  "WATCH",
+  "EXPERIENCE",
+  "RANDOM",
+  "GAMES",
+  "ABOUT",
+  "PRIVATE",
+  "LOVE",
+];
 
 const photosWithCategory = photos.map((photo, index) => ({
   ...photo,
@@ -15,175 +23,598 @@ export default function App() {
   const [rgb, setRgb] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
   const [filter, setFilter] = useState("ALL");
-  const [loadedImages, setLoadedImages] = useState({});
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+
+  /* =========================
+     WELCOME
+  ========================= */
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowWelcome(false), 1800);
+    const timer = setTimeout(() => {
+      setShowWelcome(false);
+    }, 1800);
+
     return () => clearTimeout(timer);
   }, []);
 
+  /* =========================
+     SOFT RGB
+  ========================= */
+
   useEffect(() => {
-    let frame;
+    let frame: number;
+
     const animate = () => {
-      setRgb((v) => (v + 0.15) % 360);
+      setRgb((v) => (v + 0.12) % 360);
       frame = requestAnimationFrame(animate);
     };
+
     frame = requestAnimationFrame(animate);
+
     return () => cancelAnimationFrame(frame);
   }, []);
 
   const color1 = `hsl(${rgb}, 100%, 65%)`;
   const color2 = `hsl(${(rgb + 100) % 360}, 100%, 65%)`;
 
+  /* =========================
+     AUTOPLAY
+  ========================= */
+
   useEffect(() => {
     if (!autoplay) return;
+
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % photosWithCategory.length);
+      setActiveIndex(
+        (prev) => (prev + 1) % photosWithCategory.length
+      );
     }, 4000);
+
     return () => clearInterval(interval);
   }, [autoplay]);
 
+  /* =========================
+     SWIPE MOBILE
+  ========================= */
+
   const touchStartX = useRef(0);
-  const handleTouchStart = (e) => {
+
+  const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   };
-  const handleTouchEnd = (e) => {
-    const diff = touchStartX.current - e.changedTouches[0].clientX;
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const diff =
+      touchStartX.current - e.changedTouches[0].clientX;
+
     if (diff > 50) {
-      setActiveIndex((prev) => (prev + 1) % photosWithCategory.length);
-    } else if (diff < -50) {
-      setActiveIndex((prev) => (prev - 1 + photosWithCategory.length) % photosWithCategory.length);
+      setActiveIndex(
+        (prev) => (prev + 1) % photosWithCategory.length
+      );
+    }
+
+    if (diff < -50) {
+      setActiveIndex(
+        (prev) =>
+          (prev - 1 + photosWithCategory.length) %
+          photosWithCategory.length
+      );
     }
   };
 
+  /* =========================
+     RANDOM
+  ========================= */
+
   const randomPhoto = () => {
-    let next = Math.floor(Math.random() * photosWithCategory.length);
-    while (next === activeIndex && photosWithCategory.length > 1) {
-      next = Math.floor(Math.random() * photosWithCategory.length);
+    let next = Math.floor(
+      Math.random() * photosWithCategory.length
+    );
+
+    while (
+      next === activeIndex &&
+      photosWithCategory.length > 1
+    ) {
+      next = Math.floor(
+        Math.random() * photosWithCategory.length
+      );
     }
+
     setActiveIndex(next);
   };
 
-  const handleImageLoad = (id) => {
-    setLoadedImages((prev) => ({ ...prev, [id]: true }));
+  /* =========================
+     IMAGE LOADING
+  ========================= */
+
+  const handleImageLoad = (id: string) => {
+    setLoadedImages((prev) => ({
+      ...prev,
+      [id]: true,
+    }));
   };
 
+  /* =========================
+     FILTER
+  ========================= */
+
   const filteredPhotos = useMemo(() => {
-    if (filter === "ALL") return photosWithCategory;
-    return photosWithCategory.filter((p) => p.category === filter);
+    if (filter === "ALL") {
+      return photosWithCategory;
+    }
+
+    return photosWithCategory.filter(
+      (photo) => photo.category === filter
+    );
   }, [filter]);
 
   const activePhoto = photosWithCategory[activeIndex];
 
   return (
-    <main className="min-h-screen bg-[#0a0a0f] text-white">
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute top-[-20%] left-[-10%] h-[500px] w-[500px] rounded-full blur-[150px] opacity-[0.10]" style={{ background: color1 }} />
-        <div className="absolute bottom-[-20%] right-[-10%] h-[500px] w-[500px] rounded-full blur-[150px] opacity-[0.10]" style={{ background: color2 }} />
+    <main className="min-h-screen overflow-x-hidden bg-[#08080b] text-white">
+
+      {/* ==================================================
+          VERY SOFT RGB AMBIENT
+      ================================================== */}
+
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+
+        <div
+          className="absolute -left-40 -top-40 h-[450px] w-[450px] rounded-full blur-[160px] opacity-[0.055]"
+          style={{ background: color1 }}
+        />
+
+        <div
+          className="absolute -bottom-40 -right-40 h-[450px] w-[450px] rounded-full blur-[160px] opacity-[0.045]"
+          style={{ background: color2 }}
+        />
+
       </div>
 
+      {/* ==================================================
+          WELCOME
+      ================================================== */}
+
       {showWelcome && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-[#0a0a0f]">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-[#08080b]">
+
           <div className="text-center">
-            <p className="text-[10px] uppercase tracking-[0.5em] text-white/30">2026 / Indonesia</p>
-            <h1 className="mt-6 text-7xl font-black" style={{ color: color1 }}>Info Malam.</h1>
-            <div className="mx-auto mt-4 h-[2px] w-20 rounded-full" style={{ background: `linear-gradient(90deg, ${color1}, ${color2})` }} />
-            <p className="mt-4 text-[10px] uppercase tracking-[0.4em] text-white/20">Memories after dark</p>
+
+            <p className="text-[9px] uppercase tracking-[0.6em] text-white/25">
+              2026 / Indonesia
+            </p>
+
+            <h1
+              className="mt-6 text-6xl font-black tracking-[-0.07em] sm:text-8xl"
+              style={{
+                textShadow: `0 0 35px ${color1}25`,
+              }}
+            >
+              Info
+              <br />
+              Malam.
+            </h1>
+
+            <div
+              className="mx-auto mt-7 h-[1px] w-20"
+              style={{
+                background: `linear-gradient(
+                  90deg,
+                  transparent,
+                  ${color1},
+                  ${color2},
+                  transparent
+                )`,
+              }}
+            />
+
+            <p className="mt-5 text-[9px] uppercase tracking-[0.5em] text-white/20">
+              Memories after dark
+            </p>
+
           </div>
         </div>
       )}
 
-      <nav className="fixed top-0 left-0 right-0 z-50 px-5 py-5">
-        <div className="mx-auto max-w-7xl flex items-center justify-between">
-          <span className="text-sm font-black" style={{ color: color1 }}>✦ INFOMALAM</span>
-          <div className="flex items-center gap-5 text-[10px] font-medium uppercase">
-            <a href="#gallery" className="text-white/40 hover:text-white">Gallery</a>
-            <span className="text-white/20">{filteredPhotos.length}</span>
+      {/* ==================================================
+          NAVBAR
+      ================================================== */}
+
+      <nav className="fixed left-0 right-0 top-0 z-50 px-4 py-4 sm:px-7">
+
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
+
+          <a
+            href="#home"
+            className="text-xs font-black tracking-[0.25em]"
+          >
+            <span
+              style={{
+                color: color1,
+                textShadow: `0 0 15px ${color1}30`,
+              }}
+            >
+              ✦
+            </span>{" "}
+            INFOMALAM
+          </a>
+
+          <div className="flex items-center gap-5 text-[9px] uppercase tracking-[0.25em]">
+
+            <a
+              href="#gallery"
+              className="text-white/35 transition hover:text-white"
+            >
+              Gallery
+            </a>
+
+            <span className="text-white/20">
+              {filteredPhotos.length}
+            </span>
+
           </div>
+
         </div>
       </nav>
 
-      <section className="relative z-10 min-h-screen flex items-end px-6 pb-16 pt-28" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      {/* ==================================================
+          HERO
+      ================================================== */}
+
+      <section
+        id="home"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className="relative z-10 flex min-h-screen items-end overflow-hidden px-5 pb-16 pt-28 sm:px-8 lg:px-14"
+      >
+
         <div className="absolute inset-0 -z-10">
-          <img src={activePhoto.url} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent to-transparent" />
+
+          <img
+            src={activePhoto.url}
+            alt={activePhoto.public_id}
+            className="h-full w-full object-cover transition-opacity duration-700"
+          />
+
+          <div className="absolute inset-0 bg-black/35" />
+
+          <div className="absolute inset-0 bg-gradient-to-t from-[#08080b] via-black/10 to-black/20" />
+
         </div>
+
         <div className="mx-auto w-full max-w-7xl">
-          <p className="text-[10px] font-medium uppercase tracking-[0.4em] text-white/40">2026 / Indonesia</p>
-          <h1 className="mt-3 text-[15vw] font-black leading-[0.85]">
-            Malam<br />
-            <span style={{ background: `linear-gradient(90deg, ${color1}, ${color2})`, WebkitBackgroundClip: "text", color: "transparent" }}>Bersama.</span>
+
+          <p className="text-[9px] uppercase tracking-[0.5em] text-white/35">
+            2026 / Indonesia
+          </p>
+
+          <h1 className="mt-4 text-[17vw] font-black leading-[0.78] tracking-[-0.08em] sm:text-[13vw] lg:text-[10rem]">
+
+            Malam
+            <br />
+
+            <span
+              style={{
+                background: `linear-gradient(
+                  90deg,
+                  white 0%,
+                  ${color1} 45%,
+                  ${color2} 75%,
+                  white 100%
+                )`,
+                WebkitBackgroundClip: "text",
+                color: "transparent",
+              }}
+            >
+              Bersama.
+            </span>
+
           </h1>
-          <p className="mt-4 max-w-md text-sm text-white/30">Kumpulan momen, teman, dan cerita dalam satu arsip malam.</p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <button onClick={randomPhoto} className="px-8 py-4 rounded-full text-sm font-bold uppercase text-black" style={{ background: `linear-gradient(135deg, ${color1}, ${color2})`, boxShadow: `0 0 30px ${color1}30` }}>Foto Acak →</button>
-            <button onClick={() => setAutoplay((p) => !p)} className="px-6 py-4 rounded-full border border-white/10 text-white/40 text-sm">{autoplay ? "⏸" : "▶"}</button>
+
+          <p className="mt-6 max-w-md text-sm leading-6 text-white/35">
+            Kumpulan momen, teman, dan cerita dalam satu arsip malam.
+          </p>
+
+          <div className="mt-8 flex items-center gap-3">
+
+            <button
+              onClick={randomPhoto}
+              className="rounded-full px-7 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black transition hover:scale-105"
+              style={{
+                background: `linear-gradient(
+                  135deg,
+                  ${color1},
+                  ${color2}
+                )`,
+                boxShadow: `0 0 30px ${color1}20`,
+              }}
+            >
+              Foto Acak →
+            </button>
+
+            <button
+              onClick={() => setAutoplay((p) => !p)}
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/30 text-white/50 backdrop-blur-md transition hover:border-white/25 hover:text-white"
+            >
+              {autoplay ? "Ⅱ" : "▶"}
+            </button>
+
           </div>
+
         </div>
       </section>
 
-      <section id="gallery" className="relative z-10 px-6 py-16">
+      {/* ==================================================
+          GALLERY
+      ================================================== */}
+
+      <section
+        id="gallery"
+        className="relative z-10 px-5 py-24 sm:px-8 lg:px-14 lg:py-32"
+      >
+
         <div className="mx-auto max-w-7xl">
-          <div className="flex items-end justify-between mb-8">
+
+          {/* HEADER */}
+
+          <div className="mb-12 flex items-end justify-between">
+
             <div>
-              <p className="text-[10px] font-medium uppercase text-white/20">02 / Gallery</p>
-              <h2 className="text-4xl font-black mt-1">Semua <span style={{ color: color1 }}>cerita.</span></h2>
+
+              <p className="text-[9px] uppercase tracking-[0.5em] text-white/20">
+                02 / Gallery
+              </p>
+
+              <h2 className="mt-3 text-5xl font-black tracking-[-0.06em] sm:text-7xl">
+
+                Semua{" "}
+
+                <span
+                  style={{
+                    color: color1,
+                    textShadow: `0 0 20px ${color1}20`,
+                  }}
+                >
+                  cerita.
+                </span>
+
+              </h2>
+
             </div>
-            <button onClick={randomPhoto} className="text-[10px] font-medium text-white/30 hover:text-white">Random ↻</button>
+
+            <button
+              onClick={randomPhoto}
+              className="text-[9px] uppercase tracking-[0.3em] text-white/30 transition hover:text-white"
+            >
+              Random ↻
+            </button>
+
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-10 overflow-x-auto pb-2">
-            <button onClick={() => setFilter("ALL")} className={`px-5 py-2 rounded-full text-[10px] font-bold uppercase ${filter === "ALL" ? "text-black" : "text-white/30"}`} style={filter === "ALL" ? { background: `linear-gradient(135deg, ${color1}, ${color2})` } : {}}>All</button>
-            {CATEGORIES.map((cat) => (
-              <button key={cat} onClick={() => setFilter(cat)} className={`px-5 py-2 rounded-full text-[10px] font-bold uppercase ${filter === cat ? "text-black" : "text-white/30"}`} style={filter === cat ? { background: `linear-gradient(135deg, ${color1}, ${color2})` } : {}}>{cat}</button>
+          {/* ==================================================
+              FILTER
+          ================================================== */}
+
+          <div className="mb-12 flex gap-2 overflow-x-auto pb-2">
+
+            <button
+              onClick={() => setFilter("ALL")}
+              className={`shrink-0 rounded-full px-5 py-2.5 text-[9px] font-bold uppercase tracking-[0.15em] transition ${
+                filter === "ALL"
+                  ? "text-black"
+                  : "border border-white/10 bg-white/[0.02] text-white/30 hover:text-white"
+              }`}
+              style={
+                filter === "ALL"
+                  ? {
+                      background: `linear-gradient(
+                        135deg,
+                        ${color1},
+                        ${color2}
+                      )`,
+                    }
+                  : undefined
+              }
+            >
+              All
+            </button>
+
+            {CATEGORIES.map((category) => (
+
+              <button
+                key={category}
+                onClick={() => setFilter(category)}
+                className={`shrink-0 rounded-full px-5 py-2.5 text-[9px] font-bold uppercase tracking-[0.15em] transition ${
+                  filter === category
+                    ? "text-black"
+                    : "border border-white/10 bg-white/[0.02] text-white/30 hover:text-white"
+                }`}
+                style={
+                  filter === category
+                    ? {
+                        background: `linear-gradient(
+                          135deg,
+                          ${color1},
+                          ${color2}
+                        )`,
+                      }
+                    : undefined
+                }
+              >
+                {category}
+              </button>
+
             ))}
+
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+          {/* ==================================================
+              INSTAGRAM STYLE GRID
+          ================================================== */}
+
+          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 sm:gap-7 lg:gap-9">
+
             {filteredPhotos.map((photo, index) => {
-              const isLoaded = loadedImages[photo.public_id];
+
+              const isLoaded =
+                loadedImages[photo.public_id];
+
+              const originalIndex =
+                photosWithCategory.findIndex(
+                  (p) => p.public_id === photo.public_id
+                );
+
               return (
-                <div
+
+                <article
                   key={photo.public_id}
                   onClick={() => {
-                    const originalIndex = photosWithCategory.findIndex((p) => p.public_id === photo.public_id);
                     setActiveIndex(originalIndex);
                     setSelected(photo);
                   }}
-                  className="group relative overflow-hidden rounded-2xl cursor-pointer transition hover:scale-[1.02] active:scale-[0.97]"
-                  style={{
-                    border: `2px solid ${index % 2 === 0 ? color1 : color2}50`,
-                    boxShadow: `0 0 25px ${index % 2 === 0 ? color1 : color2}15`,
-                  }}
+                  className="group cursor-pointer"
                 >
-                  <div className="aspect-[3/4] bg-white/5">
-                    {!isLoaded && <div className="absolute inset-0 animate-pulse bg-white/5" />}
-                    <img
-                      src={photo.url}
-                      loading={index < 6 ? "eager" : "lazy"}
-                      onLoad={() => handleImageLoad(photo.public_id)}
-                      className={`h-full w-full object-cover transition duration-500 group-hover:scale-105 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+
+                  {/* PHOTO */}
+
+                  <div
+                    className="relative overflow-hidden rounded-[18px] bg-[#111116]"
+                    style={{
+                      boxShadow: `
+                        0 8px 30px rgba(0,0,0,0.35)
+                      `,
+                    }}
+                  >
+
+                    {/* RGB LIGHT */}
+
+                    <div
+                      className="pointer-events-none absolute -inset-[1px] z-10 rounded-[19px] opacity-0 transition duration-500 group-hover:opacity-100"
+                      style={{
+                        background: `linear-gradient(
+                          135deg,
+                          ${color1},
+                          transparent 35%,
+                          transparent 65%,
+                          ${color2}
+                        )`,
+                      }}
                     />
+
+                    <div className="relative z-20 aspect-[3/4] overflow-hidden rounded-[17px]">
+
+                      {!isLoaded && (
+                        <div className="absolute inset-0 animate-pulse bg-white/[0.04]" />
+                      )}
+
+                      <img
+                        src={photo.url}
+                        alt={`Foto ${index + 1}`}
+                        loading={index < 6 ? "eager" : "lazy"}
+                        onLoad={() =>
+                          handleImageLoad(photo.public_id)
+                        }
+                        className={`h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.04] ${
+                          isLoaded
+                            ? "opacity-100"
+                            : "opacity-0"
+                        }`}
+                      />
+
+                      {/* HOVER DARK */}
+
+                      <div className="absolute inset-0 bg-black/0 transition duration-500 group-hover:bg-black/10" />
+
+                      {/* CATEGORY */}
+
+                      <div className="absolute left-3 top-3 rounded-full bg-black/45 px-2.5 py-1.5 text-[7px] font-bold tracking-[0.15em] text-white/70 opacity-0 backdrop-blur-md transition duration-300 group-hover:opacity-100">
+                        {photo.category}
+                      </div>
+
+                    </div>
+
                   </div>
-                  <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded-full text-[8px] font-bold text-white/70">{photo.category}</div>
-                  <div className="absolute bottom-3 left-3 text-[9px] font-bold text-white/30">#{String(index + 1).padStart(2, "0")}</div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition" />
-                </div>
+
+                  {/* UNDER PHOTO */}
+
+                  <div className="flex items-center justify-between px-1 pt-3">
+
+                    <span className="text-[8px] uppercase tracking-[0.25em] text-white/20">
+                      {photo.category}
+                    </span>
+
+                    <span className="text-[8px] text-white/15">
+                      #{String(index + 1).padStart(2, "0")}
+                    </span>
+
+                  </div>
+
+                </article>
+
               );
             })}
+
           </div>
-          {filteredPhotos.length === 0 && <p className="text-center text-white/20 py-12 text-sm">Tidak ada foto di kategori ini.</p>}
+
+          {filteredPhotos.length === 0 && (
+            <div className="py-20 text-center">
+              <p className="text-sm text-white/20">
+                Tidak ada foto di kategori ini.
+              </p>
+            </div>
+          )}
+
         </div>
       </section>
 
-      <button onClick={randomPhoto} className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-2xl" style={{ background: `linear-gradient(135deg, ${color1}, ${color2})`, boxShadow: `0 0 40px ${color1}30` }}>🎲</button>
+      {/* ==================================================
+          FLOATING RANDOM
+      ================================================== */}
+
+      <button
+        onClick={randomPhoto}
+        className="fixed bottom-6 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/60 text-lg backdrop-blur-xl transition hover:scale-110"
+        style={{
+          boxShadow: `0 0 25px ${color1}18`,
+        }}
+      >
+        ↻
+      </button>
+
+      {/* ==================================================
+          LIGHTBOX
+      ================================================== */}
 
       {selected && (
-        <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-xl flex items-center justify-center p-6" onClick={() => setSelected(null)}>
-          <button onClick={() => setSelected(null)} className="absolute top-5 right-5 z-20 text-white/30 text-sm hover:text-white">✕ Tutup</button>
-          <img src={selected.url} onClick={(e) => e.stopPropagation()} className="relative max-h-[90vh] max-w-full rounded-2xl object-contain" style={{ boxShadow: `0 0 80px ${color1}20` }} />
+
+        <div
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/95 p-5 backdrop-blur-xl"
+          onClick={() => setSelected(null)}
+        >
+
+          <button
+            onClick={() => setSelected(null)}
+            className="absolute right-5 top-5 z-20 rounded-full border border-white/10 bg-black/50 px-4 py-3 text-[10px] uppercase tracking-[0.2em] text-white/50 backdrop-blur-xl transition hover:text-white"
+          >
+            Tutup ×
+          </button>
+
+          <img
+            src={selected.url}
+            alt="Fullscreen"
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-h-[90vh] max-w-full rounded-2xl object-contain"
+            style={{
+              boxShadow: `
+                0 0 60px ${color1}12
+              `,
+            }}
+          />
+
         </div>
+
       )}
+
     </main>
   );
 }
