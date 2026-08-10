@@ -2,12 +2,25 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { photos, type Photo } from "./photo";
 
+// ========================
+// TAMBAHKAN KATEGORI KE FOTO
+// (Asumsi foto dari import, kita tambahkan properti category)
+// ========================
+const categories = ["WATCH", "EXPERIENCE", "RANDOM", "GAMES", "ABOUT", "PRIVATE", "LOVE"];
+
+// Kita buat ulang array photos dengan kategori (agar konsisten)
+const photosWithCategory: (Photo & { category: string })[] = photos.map((photo, index) => ({
+  ...photo,
+  category: categories[index % categories.length],
+}));
+
 export default function App() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [selected, setSelected] = useState<Photo | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
   const [rgb, setRgb] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
+  const [filter, setFilter] = useState<string>("ALL"); // "ALL" atau salah satu kategori
 
   /* =========================
      WELCOME
@@ -39,7 +52,7 @@ export default function App() {
   useEffect(() => {
     if (!autoplay) return;
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % photos.length);
+      setActiveIndex((prev) => (prev + 1) % photosWithCategory.length);
     }, 4000);
     return () => clearInterval(interval);
   }, [autoplay]);
@@ -55,9 +68,9 @@ export default function App() {
   const handleTouchEnd = () => {
     const diff = touchStartX.current - touchEndX.current;
     if (diff > 50) {
-      setActiveIndex((prev) => (prev + 1) % photos.length);
+      setActiveIndex((prev) => (prev + 1) % photosWithCategory.length);
     } else if (diff < -50) {
-      setActiveIndex((prev) => (prev - 1 + photos.length) % photos.length);
+      setActiveIndex((prev) => (prev - 1 + photosWithCategory.length) % photosWithCategory.length);
     }
   };
 
@@ -65,9 +78,9 @@ export default function App() {
      RANDOM
   ========================= */
   const randomPhoto = () => {
-    let next = Math.floor(Math.random() * photos.length);
-    while (next === activeIndex && photos.length > 1) {
-      next = Math.floor(Math.random() * photos.length);
+    let next = Math.floor(Math.random() * photosWithCategory.length);
+    while (next === activeIndex && photosWithCategory.length > 1) {
+      next = Math.floor(Math.random() * photosWithCategory.length);
     }
     setActiveIndex(next);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -81,10 +94,31 @@ export default function App() {
     setLoadedImages((prev) => ({ ...prev, [id]: true }));
   };
 
-  const activePhoto = photos[activeIndex];
+  /* =========================
+     FILTER
+  ========================= */
+  const filteredPhotos = useMemo(() => {
+    if (filter === "ALL") return photosWithCategory;
+    return photosWithCategory.filter((photo) => photo.category === filter);
+  }, [filter]);
+
+  /* =========================
+     Urutan foto: yang aktif di depan
+  ========================= */
   const orderedPhotos = useMemo(() => {
-    return [photos[activeIndex], ...photos.filter((_, i) => i !== activeIndex)];
+    const active = photosWithCategory[activeIndex];
+    // kita tetap gunakan semua foto, tapi untuk gallery kita tampilkan filtered
+    // Tapi kita ingin gallery menampilkan filteredPhotos, bukan ordered
+    // Maka kita ubah: gallery akan menggunakan filteredPhotos
+    // Tapi untuk hero tetap pakai activeIndex.
+    // Kita kembalikan array untuk hero (tidak digunakan di gallery)
+    return [active, ...photosWithCategory.filter((_, i) => i !== activeIndex)];
   }, [activeIndex]);
+
+  /* =========================
+     Ambil foto aktif untuk hero
+  ========================= */
+  const activePhoto = photosWithCategory[activeIndex];
 
   return (
     <main className="scroll-container min-h-screen overflow-y-scroll bg-[#050507] text-white">
@@ -164,14 +198,14 @@ export default function App() {
               className="rounded-full border px-3 py-1 text-white/50"
               style={{ borderColor: `${color1}30` }}
             >
-              {photos.length}
+              {filteredPhotos.length}
             </span>
           </div>
         </div>
       </nav>
 
       {/* =========================
-          HERO (dengan swipe & parallax ringan)
+          HERO (dengan swipe)
       ========================= */}
       <section
         id="home"
@@ -252,7 +286,7 @@ export default function App() {
         <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-3">
           <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-7 backdrop-blur-xl">
             <p className="text-[10px] uppercase tracking-[0.4em] text-white/25">Archive</p>
-            <p className="mt-4 text-5xl font-black">{photos.length}</p>
+            <p className="mt-4 text-5xl font-black">{photosWithCategory.length}</p>
             <p className="mt-1 text-sm text-white/30">captured moments</p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-7 backdrop-blur-xl">
@@ -269,11 +303,11 @@ export default function App() {
       </section>
 
       {/* =========================
-          GALLERY
+          GALLERY DENGAN FILTER
       ========================= */}
       <section id="gallery" className="section-snap relative z-10 px-5 py-20 sm:px-8 lg:px-14 lg:py-32">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-12 flex items-end justify-between">
+          <div className="mb-8 flex items-end justify-between">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/25">
                 02 — Gallery
@@ -294,18 +328,57 @@ export default function App() {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:gap-6">
-            {orderedPhotos.map((photo, index) => {
-              const originalIndex = photos.findIndex(
-                (item) => item.public_id === photo.public_id
-              );
-              const big = index === 0;
+          {/* =========================
+              TOMBOL FILTER (mirip screenshot)
+          ========================= */}
+          <div className="mb-8 flex flex-wrap gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <button
+              onClick={() => setFilter("ALL")}
+              className={`whitespace-nowrap rounded-full border px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] transition active:scale-95 ${
+                filter === "ALL"
+                  ? "border-white/40 bg-white/10 text-white"
+                  : "border-white/10 text-white/40 hover:border-white/30 hover:text-white/70"
+              }`}
+            >
+              ALL
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setFilter(cat)}
+                className={`whitespace-nowrap rounded-full border px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] transition active:scale-95 ${
+                  filter === cat
+                    ? "border-white/40 bg-white/10 text-white"
+                    : "border-white/10 text-white/40 hover:border-white/30 hover:text-white/70"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* =========================
+              GRID FOTO (dengan animasi)
+          ========================= */}
+          <motion.div
+            key={filter}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:gap-6"
+          >
+            {filteredPhotos.map((photo, index) => {
+              const big = index === 0 && filter === "ALL"; // hanya foto pertama yang besar jika ALL
               const isLoaded = loadedImages[photo.public_id];
 
               return (
                 <button
                   key={photo.public_id}
                   onClick={() => {
+                    // cari index di photosWithCategory
+                    const originalIndex = photosWithCategory.findIndex(
+                      (item) => item.public_id === photo.public_id
+                    );
                     setActiveIndex(originalIndex);
                     setSelected(photo);
                   }}
@@ -331,6 +404,11 @@ export default function App() {
                     />
                   </div>
 
+                  {/* Label kategori (opsional) */}
+                  <div className="absolute left-3 top-3 rounded-full bg-black/50 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white/70 backdrop-blur-sm">
+                    {photo.category}
+                  </div>
+
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-60" />
                   <div
                     className="pointer-events-none absolute inset-0 opacity-0 transition duration-500 group-active:opacity-100"
@@ -346,7 +424,13 @@ export default function App() {
                 </button>
               );
             })}
-          </div>
+          </motion.div>
+
+          {filteredPhotos.length === 0 && (
+            <p className="mt-12 text-center text-sm text-white/30">
+              Tidak ada foto di kategori ini.
+            </p>
+          )}
         </div>
       </section>
 
@@ -462,7 +546,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* =========================
-          CSS SCROLL SNAP (ditempel di sini karena Tailwind tidak support)
+          CSS SCROLL SNAP & HIDE SCROLLBAR
       ========================= */}
       <style>{`
         .scroll-container {
@@ -475,9 +559,23 @@ export default function App() {
           scroll-snap-stop: always;
           min-height: 100vh;
         }
-        /* Untuk mobile, touch area lebih besar */
         button, a {
           touch-action: manipulation;
+        }
+        /* Sembunyikan scrollbar agar lebih rapi */
+        .scroll-container::-webkit-scrollbar {
+          display: none;
+        }
+        .scroll-container {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
     </main>
