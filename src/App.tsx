@@ -89,17 +89,34 @@ export default function App() {
   const color2 = `hsl(${(rgb + 110) % 360}, 100%, 65%)`;
 
   /* =========================
+     GUARD: NO PHOTOS
+  ========================= */
+
+  if (!photos || photos.length === 0) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-[#050507] text-white">
+        <div className="text-center">
+          <p className="text-[10px] uppercase tracking-[0.5em] text-white/30">
+            Info Malam
+          </p>
+          <p className="mt-4 text-sm text-white/50">
+            Belum ada foto yang ter-load. Cek koneksi Cloudinary kamu.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  /* =========================
      PHOTO
   ========================= */
 
   const activePhoto = photos[activeIndex];
 
-  const orderedPhotos = useMemo(() => {
-    return [
-      photos[activeIndex],
-      ...photos.filter((_, i) => i !== activeIndex),
-    ];
-  }, [activeIndex]);
+  // NOTE: gallery grid order is now static (always follows `photos`
+  // as-is). Previously this reordered around `activeIndex`, which
+  // made the whole grid reshuffle every time a photo was opened.
+  const bigIndex = 0;
 
   /* =========================
      RANDOM
@@ -451,13 +468,15 @@ export default function App() {
 
           </div>
 
-          {/* PHOTO GRID */}
+          {/* PHOTO GRID — order is now static (doesn't reshuffle
+              when you open/navigate photos) */}
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:gap-6">
 
-            {orderedPhotos.map((photo, index) => {
+            {photos.map((photo, index) => {
 
-              const big = index === 0;
+              const big = index === bigIndex;
+              const isActive = index === activeIndex;
 
               return (
                 <button
@@ -465,13 +484,14 @@ export default function App() {
                   onClick={() => openPhoto(photo)}
                   className={`
                     group relative overflow-hidden rounded-2xl
-                    border border-white/[0.08]
+                    border
                     bg-white/[0.03]
                     text-left
                     transition-all duration-500
                     hover:-translate-y-1
                     hover:border-white/20
                     ${big ? "col-span-2 row-span-2" : ""}
+                    ${isActive ? "border-white/30" : "border-white/[0.08]"}
                   `}
                 >
 
@@ -707,5 +727,3 @@ export default function App() {
     </main>
   );
 }
-
-Ini versi yang menurutku lebih cocok buat web kamu: RGB-nya jadi aksen, bukan warna utama. Gallery juga tetap punya jarak seperti website gallery kamu sebelumnya, dan fullscreen sekarang bisa next/previous tanpa harus keluar-masuk foto.
