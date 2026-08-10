@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
 import { photos, type Photo } from "./photo";
 
 /* =========================
@@ -40,7 +40,7 @@ function useInView<T extends HTMLElement>() {
    own IntersectionObserver + hook instance.
 ========================= */
 
-const GalleryItem = React.memo(function GalleryItem({
+const GalleryItem = memo(function GalleryItem({
   photo,
   index,
   big,
