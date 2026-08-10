@@ -5,124 +5,65 @@ export default function App() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [selected, setSelected] = useState<Photo | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
-  const [mouse, setMouse] = useState({ x: 50, y: 50 });
-
-  /* =========================
-     WELCOME
-  ========================= */
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowWelcome(false);
-    }, 2200);
+    }, 1800);
 
     return () => clearTimeout(timer);
   }, []);
 
-  /* =========================
-     MOUSE EFFECT
-  ========================= */
-
-  useEffect(() => {
-    const move = (e: MouseEvent) => {
-      setMouse({
-        x: (e.clientX / window.innerWidth) * 100,
-        y: (e.clientY / window.innerHeight) * 100,
-      });
-    };
-
-    window.addEventListener("mousemove", move);
-
-    return () => {
-      window.removeEventListener("mousemove", move);
-    };
-  }, []);
-
-  /* =========================
-     ACTIVE PHOTO
-  ========================= */
-
   const activePhoto = photos[activeIndex];
 
   const orderedPhotos = useMemo(() => {
-    if (!photos.length) return [];
-
     return [
       photos[activeIndex],
       ...photos.filter((_, i) => i !== activeIndex),
     ];
   }, [activeIndex]);
 
-  /* =========================
-     RANDOM PHOTO
-  ========================= */
-
   const randomPhoto = () => {
-    if (photos.length < 2) return;
-
     let next = Math.floor(Math.random() * photos.length);
 
-    while (next === activeIndex) {
+    while (next === activeIndex && photos.length > 1) {
       next = Math.floor(Math.random() * photos.length);
     }
 
     setActiveIndex(next);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
-    <main
-      className="min-h-screen overflow-x-hidden bg-[#050505] text-white"
-      style={{
-        backgroundImage: `
-          radial-gradient(
-            circle at ${mouse.x}% ${mouse.y}%,
-            rgba(255,255,255,0.07),
-            transparent 25%
-          )
-        `,
-      }}
-    >
-      {/* =========================
-          WELCOME
-      ========================= */}
+    <main className="min-h-screen overflow-x-hidden bg-[#050505] text-white">
 
+      {/* WELCOME */}
       {showWelcome && (
-        <section className="fixed inset-0 z-[100] grid place-items-center bg-[#050505]">
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-white/[0.03] blur-3xl" />
-          </div>
-
-          <div className="relative px-6 text-center">
-            <p className="text-[10px] font-bold uppercase tracking-[0.6em] text-white/30">
+        <div className="fixed inset-0 z-[999] grid place-items-center bg-[#050505]">
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-[0.6em] text-white/30">
               2026 / Indonesia
             </p>
 
-            <h1 className="mt-7 text-6xl font-black leading-[0.78] tracking-[-0.09em] sm:text-8xl">
+            <h1 className="mt-6 text-6xl font-black leading-[0.8] tracking-[-0.08em] sm:text-8xl">
               Info
               <br />
               Malam.
             </h1>
 
-            <div className="mx-auto mt-9 h-px w-20 bg-white/30" />
+            <div className="mx-auto mt-8 h-px w-20 bg-white/30" />
 
-            <p className="mt-6 text-[10px] uppercase tracking-[0.4em] text-white/30">
+            <p className="mt-5 text-[10px] uppercase tracking-[0.4em] text-white/30">
               Memories after dark
             </p>
           </div>
-        </section>
+        </div>
       )}
 
-      {/* =========================
-          NAVBAR
-      ========================= */}
+      {/* NAVBAR */}
+      <nav className="fixed left-0 right-0 top-0 z-50 px-4 py-4 sm:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between rounded-full border border-white/10 bg-black/50 px-5 py-3 backdrop-blur-xl">
 
-      <nav className="fixed left-0 right-0 top-0 z-40 px-4 py-4 sm:px-8">
-        <div className="mx-auto flex max-w-7xl items-center justify-between rounded-full border border-white/10 bg-black/40 px-5 py-3 backdrop-blur-xl">
           <a
             href="#home"
             className="text-xs font-black uppercase tracking-[0.3em]"
@@ -130,43 +71,35 @@ export default function App() {
             Info Malam
           </a>
 
-          <div className="flex items-center gap-5 text-[10px] font-bold uppercase tracking-[0.25em] text-white/40">
-            <a
-              href="#gallery"
-              className="transition hover:text-white"
-            >
+          <div className="flex items-center gap-5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
+            <a href="#gallery" className="hover:text-white">
               Gallery
             </a>
 
             <span>{photos.length} Photos</span>
           </div>
+
         </div>
       </nav>
 
-      {/* =========================
-          HERO
-      ========================= */}
-
+      {/* HERO */}
       <section
         id="home"
         className="relative flex min-h-screen items-end overflow-hidden px-5 pb-14 pt-32 sm:px-8 lg:px-14 lg:pb-20"
       >
+
         <img
           src={activePhoto.url}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover transition-all duration-1000"
+          alt={activePhoto.public_id}
+          className="absolute inset-0 h-full w-full object-cover"
         />
 
-        <div className="absolute inset-0 bg-black/35" />
+        <div className="absolute inset-0 bg-black/45" />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/30 to-black/10" />
-
-        {/* GRAIN */}
-        <div className="pointer-events-none absolute inset-0 opacity-[0.035] mix-blend-overlay">
-          <div className="h-full w-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/30 to-transparent" />
 
         <div className="relative z-10 mx-auto w-full max-w-7xl">
+
           <p className="mb-5 text-[10px] font-bold uppercase tracking-[0.5em] text-white/50">
             2026 / Indonesia
           </p>
@@ -178,6 +111,7 @@ export default function App() {
           </h1>
 
           <div className="mt-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+
             <p className="max-w-xl text-base leading-7 text-white/60 sm:text-lg">
               Kumpulan momen, teman, dan cerita yang tersimpan
               dalam satu arsip malam.
@@ -185,27 +119,27 @@ export default function App() {
 
             <button
               onClick={randomPhoto}
-              className="w-fit rounded-full bg-white px-7 py-4 text-xs font-black uppercase tracking-[0.22em] text-black transition hover:-translate-y-1 hover:scale-105"
+              className="w-fit rounded-full bg-white px-7 py-4 text-xs font-black uppercase tracking-[0.22em] text-black transition hover:scale-105"
             >
               Foto Acak ↗
             </button>
+
           </div>
+
         </div>
       </section>
 
-      {/* =========================
-          INTRO
-      ========================= */}
+      {/* INFO */}
+      <section className="border-y border-white/10 px-5 py-20 sm:px-8 lg:px-14">
 
-      <section className="border-y border-white/10 px-5 py-20 sm:px-8 lg:px-14 lg:py-28">
         <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-3">
 
-          <div className="group">
-            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/30">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.4em] text-white/30">
               Archive
             </p>
 
-            <p className="mt-4 text-5xl font-black transition group-hover:translate-x-2">
+            <p className="mt-4 text-5xl font-black">
               {photos.length}
             </p>
 
@@ -214,8 +148,8 @@ export default function App() {
             </p>
           </div>
 
-          <div className="group">
-            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/30">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.4em] text-white/30">
               Collection
             </p>
 
@@ -228,8 +162,8 @@ export default function App() {
             </p>
           </div>
 
-          <div className="group">
-            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/30">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.4em] text-white/30">
               Status
             </p>
 
@@ -243,21 +177,21 @@ export default function App() {
           </div>
 
         </div>
+
       </section>
 
-      {/* =========================
-          GALLERY
-      ========================= */}
-
+      {/* GALLERY */}
       <section
         id="gallery"
         className="px-5 py-20 sm:px-8 lg:px-14 lg:py-32"
       >
+
         <div className="mx-auto max-w-7xl">
 
           <div className="mb-10 flex items-end justify-between">
+
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/30">
+              <p className="text-[10px] uppercase tracking-[0.4em] text-white/30">
                 02 — Gallery
               </p>
 
@@ -270,19 +204,20 @@ export default function App() {
 
             <button
               onClick={randomPhoto}
-              className="rounded-full border border-white/15 px-5 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 transition hover:border-white hover:text-white"
+              className="rounded-full border border-white/15 px-5 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 hover:border-white hover:text-white"
             >
               Random
             </button>
+
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+
             {orderedPhotos.map((photo, index) => {
+
               const originalIndex = photos.findIndex(
                 (item) => item.public_id === photo.public_id
               );
-
-              const isActive = originalIndex === activeIndex;
 
               return (
                 <button
@@ -296,6 +231,7 @@ export default function App() {
                     ${index === 0 ? "col-span-2 row-span-2" : ""}
                   `}
                 >
+
                   <img
                     src={photo.url}
                     alt={`Foto ${index + 1}`}
@@ -305,27 +241,31 @@ export default function App() {
 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
 
-                  <div className="absolute bottom-4 left-4 translate-y-3 opacity-0 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                    <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/70">
-                      {isActive ? "Now viewing" : "Open photo"}
+                  <div className="absolute bottom-4 left-4 opacity-0 transition group-hover:opacity-100">
+
+                    <p className="text-[9px] font-bold uppercase tracking-[0.3em]">
+                      Open photo
                     </p>
+
                   </div>
+
                 </button>
               );
             })}
+
           </div>
         </div>
+
       </section>
 
-      {/* =========================
-          FEATURED
-      ========================= */}
+      {/* FEATURED */}
+      <section className="border-t border-white/10 px-5 py-24 sm:px-8 lg:px-14">
 
-      <section className="border-t border-white/10 px-5 py-24 sm:px-8 lg:px-14 lg:py-36">
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.35fr_1fr] lg:items-center">
 
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/30">
+
+            <p className="text-[10px] uppercase tracking-[0.4em] text-white/30">
               03 — Featured
             </p>
 
@@ -341,31 +281,33 @@ export default function App() {
 
             <button
               onClick={() => setSelected(activePhoto)}
-              className="mt-7 rounded-full bg-white px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-black transition hover:scale-105"
+              className="mt-7 rounded-full bg-white px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-black hover:scale-105"
             >
               Buka fullscreen
             </button>
+
           </div>
 
           <button
             onClick={() => setSelected(activePhoto)}
-            className="group relative overflow-hidden rounded-2xl"
+            className="overflow-hidden rounded-2xl"
           >
+
             <img
               src={activePhoto.url}
               alt="Featured"
-              className="max-h-[75vh] w-full object-cover transition duration-700 group-hover:scale-[1.03]"
+              className="max-h-[75vh] w-full object-cover"
             />
+
           </button>
 
         </div>
+
       </section>
 
-      {/* =========================
-          FOOTER
-      ========================= */}
-
+      {/* FOOTER */}
       <footer className="border-t border-white/10 px-5 py-12 sm:px-8 lg:px-14">
+
         <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
           <p className="text-lg font-black">
@@ -377,20 +319,19 @@ export default function App() {
           </p>
 
         </div>
+
       </footer>
 
-      {/* =========================
-          LIGHTBOX
-      ========================= */}
-
+      {/* LIGHTBOX */}
       {selected && (
         <div
-          className="fixed inset-0 z-[200] grid place-items-center bg-black/95 p-4 backdrop-blur-xl"
+          className="fixed inset-0 z-[999] grid place-items-center bg-black/95 p-4"
           onClick={() => setSelected(null)}
         >
+
           <button
             onClick={() => setSelected(null)}
-            className="absolute right-5 top-5 z-10 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-xs font-bold uppercase tracking-widest backdrop-blur-md transition hover:bg-white hover:text-black"
+            className="absolute right-5 top-5 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-xs font-bold uppercase tracking-widest"
           >
             Tutup ×
           </button>
@@ -401,8 +342,10 @@ export default function App() {
             onClick={(e) => e.stopPropagation()}
             className="max-h-[90vh] max-w-full rounded-xl object-contain"
           />
+
         </div>
       )}
+
     </main>
   );
 }
