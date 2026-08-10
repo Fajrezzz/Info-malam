@@ -148,19 +148,27 @@ export default function App() {
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:gap-6">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-8 lg:gap-10">
             {filteredPhotos.map((photo, index) => {
               const big = index === 0 && filter === "ALL";
               const isLoaded = loadedImages[photo.public_id];
+              const borderColor = index % 2 === 0 ? color1 : color2;
               return (
-                <button key={photo.public_id} onClick={() => { const originalIndex = photosWithCategory.findIndex((p) => p.public_id === photo.public_id); setActiveIndex(originalIndex); setSelected(photo); }} className={`group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] text-left transition-all duration-500 active:scale-[0.98] ${big ? "col-span-2 row-span-2" : ""}`}>
+                <button
+                  key={photo.public_id}
+                  onClick={() => { const originalIndex = photosWithCategory.findIndex((p) => p.public_id === photo.public_id); setActiveIndex(originalIndex); setSelected(photo); }}
+                  className={`group relative overflow-hidden rounded-2xl bg-white/[0.03] text-left transition-all duration-500 active:scale-[0.97] ${big ? "col-span-2 row-span-2" : ""}`}
+                  style={{
+                    border: `2px solid ${borderColor}40`,
+                    boxShadow: `0 0 20px ${borderColor}20, inset 0 0 20px ${borderColor}10`,
+                  }}
+                >
                   <div className="aspect-[4/5] overflow-hidden bg-white/5">
                     {!isLoaded && <div className="absolute inset-0 animate-pulse bg-white/10" />}
                     <img src={photo.url} alt={`Foto ${index + 1}`} loading={index < 5 ? "eager" : "lazy"} onLoad={() => handleImageLoad(photo.public_id)} className={`h-full w-full object-cover transition-opacity duration-700 group-active:scale-105 ${isLoaded ? "opacity-100" : "opacity-0"}`} />
                   </div>
                   <div className="absolute left-3 top-3 rounded-full bg-black/50 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white/70 backdrop-blur-sm">{photo.category}</div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-60" />
-                  <div className="pointer-events-none absolute inset-0 opacity-0 transition duration-500 group-active:opacity-100" style={{ boxShadow: `inset 0 0 35px ${color1}25, inset 0 0 70px ${color2}12` }} />
                   <div className="absolute bottom-4 left-4"><span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/50">{String(index + 1).padStart(2, "0")}</span></div>
                 </button>
               );
