@@ -1,29 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { photos, type Photo } from "./photo";
-
-const CATEGORIES = [
-  "WATCH",
-  "EXPERIENCE",
-  "RANDOM",
-  "GAMES",
-  "ABOUT",
-  "PRIVATE",
-  "LOVE",
-];
-
-const photosWithCategory = photos.map((photo, index) => ({
-  ...photo,
-  category: CATEGORIES[index % CATEGORIES.length],
-}));
 
 export default function App() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [selected, setSelected] = useState<Photo | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
   const [rgb, setRgb] = useState(0);
-  const [autoplay, setAutoplay] = useState(true);
-  const [filter, setFilter] = useState("ALL");
-  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
 
   /* =========================
      WELCOME
@@ -45,7 +27,7 @@ export default function App() {
     let frame: number;
 
     const animate = () => {
-      setRgb((v) => (v + 0.12) % 360);
+      setRgb((value) => (value + 0.12) % 360);
       frame = requestAnimationFrame(animate);
     };
 
@@ -54,140 +36,62 @@ export default function App() {
     return () => cancelAnimationFrame(frame);
   }, []);
 
+  const activePhoto = photos[activeIndex];
+
+  const orderedPhotos = useMemo(() => {
+    return [
+      photos[activeIndex],
+      ...photos.filter((_, i) => i !== activeIndex),
+    ];
+  }, [activeIndex]);
+
   const color1 = `hsl(${rgb}, 100%, 65%)`;
-  const color2 = `hsl(${(rgb + 100) % 360}, 100%, 65%)`;
-
-  /* =========================
-     AUTOPLAY
-  ========================= */
-
-  useEffect(() => {
-    if (!autoplay) return;
-
-    const interval = setInterval(() => {
-      setActiveIndex(
-        (prev) => (prev + 1) % photosWithCategory.length
-      );
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, [autoplay]);
-
-  /* =========================
-     SWIPE MOBILE
-  ========================= */
-
-  const touchStartX = useRef(0);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const diff =
-      touchStartX.current - e.changedTouches[0].clientX;
-
-    if (diff > 50) {
-      setActiveIndex(
-        (prev) => (prev + 1) % photosWithCategory.length
-      );
-    }
-
-    if (diff < -50) {
-      setActiveIndex(
-        (prev) =>
-          (prev - 1 + photosWithCategory.length) %
-          photosWithCategory.length
-      );
-    }
-  };
-
-  /* =========================
-     RANDOM
-  ========================= */
-
-  const randomPhoto = () => {
-    let next = Math.floor(
-      Math.random() * photosWithCategory.length
-    );
-
-    while (
-      next === activeIndex &&
-      photosWithCategory.length > 1
-    ) {
-      next = Math.floor(
-        Math.random() * photosWithCategory.length
-      );
-    }
-
-    setActiveIndex(next);
-  };
-
-  /* =========================
-     IMAGE LOADING
-  ========================= */
-
-  const handleImageLoad = (id: string) => {
-    setLoadedImages((prev) => ({
-      ...prev,
-      [id]: true,
-    }));
-  };
-
-  /* =========================
-     FILTER
-  ========================= */
-
-  const filteredPhotos = useMemo(() => {
-    if (filter === "ALL") {
-      return photosWithCategory;
-    }
-
-    return photosWithCategory.filter(
-      (photo) => photo.category === filter
-    );
-  }, [filter]);
-
-  const activePhoto = photosWithCategory[activeIndex];
+  const color2 = `hsl(${(rgb + 110) % 360}, 100%, 65%)`;
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#08080b] text-white">
+    <main className="min-h-screen overflow-x-hidden bg-[#050507] text-white">
 
-      {/* ==================================================
-          VERY SOFT RGB AMBIENT
-      ================================================== */}
+      {/* =========================
+          SOFT RGB BACKGROUND
+      ========================= */}
 
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
 
         <div
-          className="absolute -left-40 -top-40 h-[450px] w-[450px] rounded-full blur-[160px] opacity-[0.055]"
+          className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full blur-[150px] opacity-[0.08]"
           style={{ background: color1 }}
         />
 
         <div
-          className="absolute -bottom-40 -right-40 h-[450px] w-[450px] rounded-full blur-[160px] opacity-[0.045]"
+          className="absolute -right-40 top-[45%] h-[500px] w-[500px] rounded-full blur-[150px] opacity-[0.06]"
           style={{ background: color2 }}
+        />
+
+        <div
+          className="absolute bottom-[-250px] left-[25%] h-[500px] w-[500px] rounded-full blur-[150px] opacity-[0.05]"
+          style={{ background: color1 }}
         />
 
       </div>
 
-      {/* ==================================================
+      {/* =========================
           WELCOME
-      ================================================== */}
+      ========================= */}
 
       {showWelcome && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-[#08080b]">
+        <div className="fixed inset-0 z-[999] grid place-items-center bg-[#050507]">
 
-          <div className="text-center">
+          <div
+            className="absolute h-80 w-80 rounded-full blur-[120px] opacity-10"
+            style={{ background: color1 }}
+          />
 
-            <p className="text-[9px] uppercase tracking-[0.6em] text-white/25">
-              2026 / Indonesia
-            </p>
+          <div className="relative text-center">
 
             <h1
-              className="mt-6 text-6xl font-black tracking-[-0.07em] sm:text-8xl"
+              className="text-6xl font-black leading-[0.8] tracking-[-0.09em] sm:text-8xl"
               style={{
-                textShadow: `0 0 35px ${color1}25`,
+                textShadow: `0 0 35px ${color1}30`,
               }}
             >
               Info
@@ -196,423 +100,250 @@ export default function App() {
             </h1>
 
             <div
-              className="mx-auto mt-7 h-[1px] w-20"
+              className="mx-auto mt-9 h-px w-20"
               style={{
-                background: `linear-gradient(
-                  90deg,
-                  transparent,
-                  ${color1},
-                  ${color2},
-                  transparent
-                )`,
+                background: `linear-gradient(90deg, ${color1}, ${color2})`,
               }}
             />
-
-            <p className="mt-5 text-[9px] uppercase tracking-[0.5em] text-white/20">
-              Memories after dark
-            </p>
 
           </div>
         </div>
       )}
 
-      {/* ==================================================
-          NAVBAR
-      ================================================== */}
+      {/* =========================
+          SIMPLE NAVBAR
+      ========================= */}
 
-      <nav className="fixed left-0 right-0 top-0 z-50 px-4 py-4 sm:px-7">
+      <nav className="fixed left-0 right-0 top-0 z-50 px-4 py-4 sm:px-8">
 
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
+        <div
+          className="mx-auto flex max-w-7xl items-center justify-center rounded-full border bg-black/40 px-6 py-3 backdrop-blur-xl"
+          style={{
+            borderColor: `${color1}20`,
+          }}
+        >
 
-          <a
-            href="#home"
-            className="text-xs font-black tracking-[0.25em]"
-          >
-            <span
-              style={{
-                color: color1,
-                textShadow: `0 0 15px ${color1}30`,
-              }}
-            >
-              ✦
-            </span>{" "}
-            INFOMALAM
-          </a>
-
-          <div className="flex items-center gap-5 text-[9px] uppercase tracking-[0.25em]">
-
-            <a
-              href="#gallery"
-              className="text-white/35 transition hover:text-white"
-            >
-              Gallery
-            </a>
-
-            <span className="text-white/20">
-              {filteredPhotos.length}
-            </span>
-
-          </div>
+          <p className="text-xs font-black uppercase tracking-[0.35em]">
+            Info Malam
+          </p>
 
         </div>
+
       </nav>
 
-      {/* ==================================================
+      {/* =========================
           HERO
-      ================================================== */}
+      ========================= */}
 
       <section
         id="home"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        className="relative z-10 flex min-h-screen items-end overflow-hidden px-5 pb-16 pt-28 sm:px-8 lg:px-14"
+        className="relative z-10 flex min-h-screen items-end overflow-hidden px-5 pb-16 pt-32 sm:px-8 lg:px-14 lg:pb-20"
       >
 
-        <div className="absolute inset-0 -z-10">
+        <img
+          src={activePhoto.url}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
 
-          <img
-            src={activePhoto.url}
-            alt={activePhoto.public_id}
-            className="h-full w-full object-cover transition-opacity duration-700"
-          />
+        <div className="absolute inset-0 bg-black/50" />
 
-          <div className="absolute inset-0 bg-black/35" />
+        <div
+          className="absolute inset-0 opacity-[0.15]"
+          style={{
+            background: `linear-gradient(
+              135deg,
+              ${color1},
+              transparent 40%,
+              ${color2}
+            )`,
+          }}
+        />
 
-          <div className="absolute inset-0 bg-gradient-to-t from-[#08080b] via-black/10 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-black/30 to-transparent" />
 
-        </div>
+        <div className="relative z-10 mx-auto w-full max-w-7xl">
 
-        <div className="mx-auto w-full max-w-7xl">
-
-          <p className="text-[9px] uppercase tracking-[0.5em] text-white/35">
-            2026 / Indonesia
-          </p>
-
-          <h1 className="mt-4 text-[17vw] font-black leading-[0.78] tracking-[-0.08em] sm:text-[13vw] lg:text-[10rem]">
-
+          <h1
+            className="text-[19vw] font-black leading-[0.76] tracking-[-0.09em] sm:text-[13vw] lg:text-[10rem]"
+            style={{
+              textShadow: `0 0 50px ${color1}15`,
+            }}
+          >
             Malam
             <br />
 
             <span
               style={{
-                background: `linear-gradient(
-                  90deg,
-                  white 0%,
-                  ${color1} 45%,
-                  ${color2} 75%,
-                  white 100%
-                )`,
+                background: `linear-gradient(90deg, white, ${color1}, white)`,
                 WebkitBackgroundClip: "text",
                 color: "transparent",
+                backgroundSize: "200% 100%",
               }}
             >
               Bersama.
             </span>
-
           </h1>
-
-          <p className="mt-6 max-w-md text-sm leading-6 text-white/35">
-            Kumpulan momen, teman, dan cerita dalam satu arsip malam.
-          </p>
-
-          <div className="mt-8 flex items-center gap-3">
-
-            <button
-              onClick={randomPhoto}
-              className="rounded-full px-7 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black transition hover:scale-105"
-              style={{
-                background: `linear-gradient(
-                  135deg,
-                  ${color1},
-                  ${color2}
-                )`,
-                boxShadow: `0 0 30px ${color1}20`,
-              }}
-            >
-              Foto Acak →
-            </button>
-
-            <button
-              onClick={() => setAutoplay((p) => !p)}
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/30 text-white/50 backdrop-blur-md transition hover:border-white/25 hover:text-white"
-            >
-              {autoplay ? "Ⅱ" : "▶"}
-            </button>
-
-          </div>
 
         </div>
       </section>
 
-      {/* ==================================================
+      {/* =========================
           GALLERY
-      ================================================== */}
+      ========================= */}
 
       <section
         id="gallery"
-        className="relative z-10 px-5 py-24 sm:px-8 lg:px-14 lg:py-32"
+        className="relative z-10 px-5 py-20 sm:px-8 lg:px-14 lg:py-32"
       >
 
         <div className="mx-auto max-w-7xl">
 
-          {/* HEADER */}
+          <h2 className="mb-10 text-4xl font-black tracking-[-0.05em] sm:text-6xl">
+            Gallery
+          </h2>
 
-          <div className="mb-12 flex items-end justify-between">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:gap-6">
 
-            <div>
+            {orderedPhotos.map((photo, index) => {
 
-              <p className="text-[9px] uppercase tracking-[0.5em] text-white/20">
-                02 / Gallery
-              </p>
+              const originalIndex = photos.findIndex(
+                (item) => item.public_id === photo.public_id
+              );
 
-              <h2 className="mt-3 text-5xl font-black tracking-[-0.06em] sm:text-7xl">
-
-                Semua{" "}
-
-                <span
-                  style={{
-                    color: color1,
-                    textShadow: `0 0 20px ${color1}20`,
-                  }}
-                >
-                  cerita.
-                </span>
-
-              </h2>
-
-            </div>
-
-            <button
-              onClick={randomPhoto}
-              className="text-[9px] uppercase tracking-[0.3em] text-white/30 transition hover:text-white"
-            >
-              Random ↻
-            </button>
-
-          </div>
-
-          {/* ==================================================
-              FILTER
-          ================================================== */}
-
-          <div className="mb-12 flex gap-2 overflow-x-auto pb-2">
-
-            <button
-              onClick={() => setFilter("ALL")}
-              className={`shrink-0 rounded-full px-5 py-2.5 text-[9px] font-bold uppercase tracking-[0.15em] transition ${
-                filter === "ALL"
-                  ? "text-black"
-                  : "border border-white/10 bg-white/[0.02] text-white/30 hover:text-white"
-              }`}
-              style={
-                filter === "ALL"
-                  ? {
-                      background: `linear-gradient(
-                        135deg,
-                        ${color1},
-                        ${color2}
-                      )`,
-                    }
-                  : undefined
-              }
-            >
-              All
-            </button>
-
-            {CATEGORIES.map((category) => (
-
-              <button
-                key={category}
-                onClick={() => setFilter(category)}
-                className={`shrink-0 rounded-full px-5 py-2.5 text-[9px] font-bold uppercase tracking-[0.15em] transition ${
-                  filter === category
-                    ? "text-black"
-                    : "border border-white/10 bg-white/[0.02] text-white/30 hover:text-white"
-                }`}
-                style={
-                  filter === category
-                    ? {
-                        background: `linear-gradient(
-                          135deg,
-                          ${color1},
-                          ${color2}
-                        )`,
-                      }
-                    : undefined
-                }
-              >
-                {category}
-              </button>
-
-            ))}
-
-          </div>
-
-          {/* ==================================================
-              INSTAGRAM STYLE GRID
-          ================================================== */}
-
-          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 sm:gap-7 lg:gap-9">
-
-            {filteredPhotos.map((photo, index) => {
-
-              const isLoaded =
-                loadedImages[photo.public_id];
-
-              const originalIndex =
-                photosWithCategory.findIndex(
-                  (p) => p.public_id === photo.public_id
-                );
+              const big = index === 0;
 
               return (
-
-                <article
+                <button
                   key={photo.public_id}
                   onClick={() => {
                     setActiveIndex(originalIndex);
                     setSelected(photo);
                   }}
-                  className="group cursor-pointer"
+                  className={`
+                    group relative overflow-hidden rounded-2xl
+                    border border-white/[0.08]
+                    bg-white/[0.03]
+                    transition-all duration-500
+                    hover:-translate-y-1
+                    hover:border-white/20
+                    ${big ? "col-span-2 row-span-2" : ""}
+                  `}
                 >
 
-                  {/* PHOTO */}
+                  <div className="aspect-[4/5] overflow-hidden">
 
-                  <div
-                    className="relative overflow-hidden rounded-[18px] bg-[#111116]"
-                    style={{
-                      boxShadow: `
-                        0 8px 30px rgba(0,0,0,0.35)
-                      `,
-                    }}
-                  >
-
-                    {/* RGB LIGHT */}
-
-                    <div
-                      className="pointer-events-none absolute -inset-[1px] z-10 rounded-[19px] opacity-0 transition duration-500 group-hover:opacity-100"
-                      style={{
-                        background: `linear-gradient(
-                          135deg,
-                          ${color1},
-                          transparent 35%,
-                          transparent 65%,
-                          ${color2}
-                        )`,
-                      }}
+                    <img
+                      src={photo.url}
+                      alt=""
+                      loading={index < 5 ? "eager" : "lazy"}
+                      className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
                     />
 
-                    <div className="relative z-20 aspect-[3/4] overflow-hidden rounded-[17px]">
-
-                      {!isLoaded && (
-                        <div className="absolute inset-0 animate-pulse bg-white/[0.04]" />
-                      )}
-
-                      <img
-                        src={photo.url}
-                        alt={`Foto ${index + 1}`}
-                        loading={index < 6 ? "eager" : "lazy"}
-                        onLoad={() =>
-                          handleImageLoad(photo.public_id)
-                        }
-                        className={`h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.04] ${
-                          isLoaded
-                            ? "opacity-100"
-                            : "opacity-0"
-                        }`}
-                      />
-
-                      {/* HOVER DARK */}
-
-                      <div className="absolute inset-0 bg-black/0 transition duration-500 group-hover:bg-black/10" />
-
-                      {/* CATEGORY */}
-
-                      <div className="absolute left-3 top-3 rounded-full bg-black/45 px-2.5 py-1.5 text-[7px] font-bold tracking-[0.15em] text-white/70 opacity-0 backdrop-blur-md transition duration-300 group-hover:opacity-100">
-                        {photo.category}
-                      </div>
-
-                    </div>
-
                   </div>
 
-                  {/* UNDER PHOTO */}
+                  {/* DARK OVERLAY */}
 
-                  <div className="flex items-center justify-between px-1 pt-3">
+                  <div className="absolute inset-0 bg-black/10 transition duration-500 group-hover:bg-black/0" />
 
-                    <span className="text-[8px] uppercase tracking-[0.25em] text-white/20">
-                      {photo.category}
-                    </span>
+                  {/* RGB EDGE */}
 
-                    <span className="text-[8px] text-white/15">
-                      #{String(index + 1).padStart(2, "0")}
-                    </span>
+                  <div
+                    className="pointer-events-none absolute inset-0 opacity-0 transition duration-500 group-hover:opacity-100"
+                    style={{
+                      boxShadow: `
+                        inset 0 0 35px ${color1}30,
+                        inset 0 0 70px ${color2}15
+                      `,
+                    }}
+                  />
 
-                  </div>
-
-                </article>
-
+                </button>
               );
             })}
 
           </div>
 
-          {filteredPhotos.length === 0 && (
-            <div className="py-20 text-center">
-              <p className="text-sm text-white/20">
-                Tidak ada foto di kategori ini.
-              </p>
-            </div>
-          )}
-
         </div>
       </section>
 
-      {/* ==================================================
-          FLOATING RANDOM
-      ================================================== */}
+      {/* =========================
+          FEATURED PHOTO
+      ========================= */}
 
-      <button
-        onClick={randomPhoto}
-        className="fixed bottom-6 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/60 text-lg backdrop-blur-xl transition hover:scale-110"
-        style={{
-          boxShadow: `0 0 25px ${color1}18`,
-        }}
-      >
-        ↻
-      </button>
+      <section className="relative z-10 px-5 pb-24 pt-10 sm:px-8 lg:px-14">
 
-      {/* ==================================================
+        <div className="mx-auto max-w-7xl">
+
+          <button
+            onClick={() => setSelected(activePhoto)}
+            className="group relative block w-full overflow-hidden rounded-3xl border border-white/10"
+          >
+
+            <img
+              src={activePhoto.url}
+              alt=""
+              className="max-h-[80vh] w-full object-cover transition duration-700 group-hover:scale-[1.02]"
+            />
+
+            <div
+              className="pointer-events-none absolute inset-0 opacity-20"
+              style={{
+                background: `linear-gradient(
+                  135deg,
+                  ${color1},
+                  transparent 45%,
+                  ${color2}
+                )`,
+              }}
+            />
+
+          </button>
+
+        </div>
+
+      </section>
+
+      {/* =========================
+          FOOTER
+      ========================= */}
+
+      <footer className="relative z-10 border-t border-white/10 px-5 py-10">
+
+        <p className="text-center text-xs font-black uppercase tracking-[0.35em] text-white/25">
+          Info Malam.
+        </p>
+
+      </footer>
+
+      {/* =========================
           LIGHTBOX
-      ================================================== */}
+      ========================= */}
 
       {selected && (
-
         <div
-          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/95 p-5 backdrop-blur-xl"
+          className="fixed inset-0 z-[999] grid place-items-center bg-black/95 p-4 backdrop-blur-2xl"
           onClick={() => setSelected(null)}
         >
 
           <button
             onClick={() => setSelected(null)}
-            className="absolute right-5 top-5 z-20 rounded-full border border-white/10 bg-black/50 px-4 py-3 text-[10px] uppercase tracking-[0.2em] text-white/50 backdrop-blur-xl transition hover:text-white"
+            className="absolute right-5 top-5 z-20 rounded-full border border-white/10 bg-black/50 px-5 py-3 text-xs font-bold text-white/70 backdrop-blur-xl"
           >
-            Tutup ×
+            ×
           </button>
 
           <img
             src={selected.url}
-            alt="Fullscreen"
+            alt=""
             onClick={(e) => e.stopPropagation()}
-            className="relative max-h-[90vh] max-w-full rounded-2xl object-contain"
+            className="relative z-10 max-h-[90vh] max-w-full rounded-2xl border border-white/10 object-contain"
             style={{
-              boxShadow: `
-                0 0 60px ${color1}12
-              `,
+              boxShadow: `0 0 80px ${color1}15`,
             }}
           />
 
         </div>
-
       )}
 
     </main>
