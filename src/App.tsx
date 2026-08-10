@@ -250,38 +250,18 @@ export default function App() {
       <nav className="fixed left-0 right-0 top-0 z-50 px-4 py-4 sm:px-8">
 
         <div
-          className="mx-auto flex max-w-7xl items-center justify-between rounded-full border bg-black/50 px-5 py-3 backdrop-blur-xl"
+          className="mx-auto flex max-w-7xl items-center justify-center rounded-full border bg-black/40 px-5 py-2.5 backdrop-blur-xl"
           style={{
-            borderColor: `${color1}25`,
+            borderColor: `${color1}20`,
           }}
         >
 
           <a
             href="#home"
-            className="text-xs font-black uppercase tracking-[0.3em]"
+            className="text-[11px] font-black uppercase tracking-[0.4em] text-white/80"
           >
             Info Malam
           </a>
-
-          <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.2em]">
-
-            <a
-              href="#gallery"
-              className="text-white/40 transition hover:text-white"
-            >
-              Gallery
-            </a>
-
-            <span
-              className="rounded-full border px-3 py-1 text-white/50"
-              style={{
-                borderColor: `${color1}30`,
-              }}
-            >
-              {photos.length}
-            </span>
-
-          </div>
 
         </div>
       </nav>
@@ -383,48 +363,6 @@ export default function App() {
       </section>
 
       {/* ==================================================
-          INFO CARDS
-      ================================================== */}
-
-      <section className="relative z-10 px-5 py-20 sm:px-8 lg:px-14">
-
-        <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-3">
-
-          {[
-            ["Archive", photos.length, "captured moments"],
-            ["Collection", "Teman", "memories together"],
-            ["Status", "Online", "Cloudinary archive"],
-          ].map(([title, value, desc]) => (
-
-            <div
-              key={String(title)}
-              className="rounded-2xl border border-white/10 bg-white/[0.025] p-7 backdrop-blur-xl transition duration-500 hover:-translate-y-1"
-            >
-
-              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/25">
-                {title}
-              </p>
-
-              <p
-                className="mt-4 text-4xl font-black"
-                style={{
-                  textShadow: `0 0 20px ${color1}20`,
-                }}
-              >
-                {value}
-              </p>
-
-              <p className="mt-1 text-sm text-white/30">
-                {desc}
-              </p>
-
-            </div>
-          ))}
-
-        </div>
-      </section>
-
-      {/* ==================================================
           GALLERY
       ================================================== */}
 
@@ -468,63 +406,66 @@ export default function App() {
 
           </div>
 
-          {/* PHOTO GRID — order is now static (doesn't reshuffle
-              when you open/navigate photos) */}
+          {/* PHOTO GRID — order is static (doesn't reshuffle when you
+              open/navigate photos). Extra gap + a rotating RGB "light
+              frame" wraps every photo. */}
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:gap-6">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-8 lg:gap-10">
 
             {photos.map((photo, index) => {
 
               const big = index === bigIndex;
               const isActive = index === activeIndex;
 
+              // Each frame's rainbow rotates at a slightly different
+              // phase so the whole grid doesn't pulse in unison.
+              const frameAngle = (rgb + index * 47) % 360;
+              const frameA = `hsl(${frameAngle}, 100%, 65%)`;
+              const frameB = `hsl(${(frameAngle + 90) % 360}, 100%, 65%)`;
+              const frameC = `hsl(${(frameAngle + 180) % 360}, 100%, 65%)`;
+              const frameD = `hsl(${(frameAngle + 270) % 360}, 100%, 65%)`;
+
               return (
                 <button
                   key={photo.public_id}
                   onClick={() => openPhoto(photo)}
                   className={`
-                    group relative overflow-hidden rounded-2xl
-                    border
-                    bg-white/[0.03]
+                    group relative rounded-[20px] p-[3px]
                     text-left
                     transition-all duration-500
-                    hover:-translate-y-1
-                    hover:border-white/20
+                    hover:-translate-y-1.5
                     ${big ? "col-span-2 row-span-2" : ""}
-                    ${isActive ? "border-white/30" : "border-white/[0.08]"}
                   `}
+                  style={{
+                    background: `conic-gradient(from ${frameAngle}deg, ${frameA}, ${frameB}, ${frameC}, ${frameD}, ${frameA})`,
+                    boxShadow: isActive
+                      ? `0 0 30px ${frameA}55, 0 0 60px ${frameC}30`
+                      : `0 0 18px ${frameA}25`,
+                  }}
                 >
 
-                  <div className="aspect-[4/5] overflow-hidden">
+                  <div className="relative overflow-hidden rounded-[17px] bg-[#050507]">
 
-                    <img
-                      src={photo.url}
-                      alt={`Foto ${index + 1}`}
-                      loading={index < 5 ? "eager" : "lazy"}
-                      className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                    />
+                    <div className="aspect-[4/5] overflow-hidden">
 
-                  </div>
+                      <img
+                        src={photo.url}
+                        alt={`Foto ${index + 1}`}
+                        loading={index < 5 ? "eager" : "lazy"}
+                        className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                      />
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
+                    </div>
 
-                  {/* RGB EDGE */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
 
-                  <div
-                    className="pointer-events-none absolute inset-0 opacity-0 transition duration-500 group-hover:opacity-100"
-                    style={{
-                      boxShadow: `
-                        inset 0 0 35px ${color1}30,
-                        inset 0 0 70px ${color2}15
-                      `,
-                    }}
-                  />
+                    <div className="absolute bottom-4 left-4">
 
-                  <div className="absolute bottom-4 left-4">
+                      <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/60">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
 
-                    <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/50">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
+                    </div>
 
                   </div>
 
