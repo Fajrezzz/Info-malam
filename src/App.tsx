@@ -1,63 +1,77 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type Photo = {
-  title: string;
-  place: string;
-  year: string;
-  description: string;
-  url: string;
-};
+/* =========================================================
+   CLOUDINARY
+   ========================================================= */
 
-const photos: Photo[] = [
-  {
-    title: "Malam Bersama",
-    place: "Indonesia",
-    year: "2026",
-    description:
-      "Satu malam, banyak cerita. Momen sederhana yang akhirnya menjadi kenangan.",
-    url: "/photos/teman-1.jpg",
-  },
-  {
-    title: "After Dark",
-    place: "Indonesia",
-    year: "2026",
-    description:
-      "Ketika malam datang, cerita-cerita kecil mulai tercipta.",
-    url: "/photos/teman-2.jpg",
-  },
-  {
-    title: "Random Moment",
-    place: "Indonesia",
-    year: "2026",
-    description:
-      "Tidak direncanakan. Tidak sempurna. Justru itu yang membuatnya berkesan.",
-    url: "/photos/teman-3.jpg",
-  },
-  {
-    title: "Good People",
-    place: "Indonesia",
-    year: "2026",
-    description:
-      "Tempatnya mungkin biasa, tapi orang-orang di dalamnya membuat semuanya berbeda.",
-    url: "/photos/teman-4.jpg",
-  },
-  {
-    title: "One Night",
-    place: "Indonesia",
-    year: "2026",
-    description:
-      "Satu frame, banyak cerita yang mungkin tidak akan terulang lagi.",
-    url: "/photos/teman-5.jpg",
-  },
-  {
-    title: "Until Next Time",
-    place: "Indonesia",
-    year: "2026",
-    description:
-      "Malam selesai. Foto tersimpan. Ceritanya tetap tinggal.",
-    url: "/photos/teman-6.jpg",
-  },
+const CLOUD_NAME = "dxkbvpaa1";
+
+const photoIds = [
+  "teman-01",
+  "teman-02",
+  "teman-03",
+  "teman-04",
+  "teman-05",
+  "teman-06",
+  "teman-07",
+  "teman-08",
+  "teman-09",
+  "teman-10",
+  "teman-11",
+  "teman-12",
+  "teman-13",
+  "teman-14",
+  "teman-15",
+  "teman-16",
+  "teman-17",
+  "teman-18",
+  "teman-19",
+  "teman-20",
+  "teman-21",
+  "teman-22",
+  "teman-23",
+  "teman-24",
+  "teman-25",
+  "teman-26",
+  "teman-27",
+  "teman-28",
+  "teman-29",
+  "teman-30",
 ];
+
+/*
+  Semua foto harus berada di folder:
+
+  info-malam/
+
+  Contoh:
+  info-malam/teman-01
+  info-malam/teman-02
+  info-malam/teman-03
+*/
+
+const cloudinaryUrl = (id: string) =>
+  `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/f_auto,q_auto,w_1800/info-malam/${id}`;
+
+const photos = photoIds.map((id, index) => ({
+  id,
+  number: index + 1,
+  url: cloudinaryUrl(id),
+  title:
+    index === 0
+      ? "Malam Bersama"
+      : index === 1
+        ? "After Dark"
+        : index === 2
+          ? "Random Moment"
+          : index === 3
+            ? "Good People"
+            : `Night Memory ${String(index + 1).padStart(2, "0")}`,
+}));
+
+/* =========================================================
+   APP
+   ========================================================= */
 
 export default function App() {
   const [active, setActive] = useState(0);
@@ -65,28 +79,44 @@ export default function App() {
   const [lightbox, setLightbox] = useState(false);
   const [liked, setLiked] = useState(false);
   const [changing, setChanging] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const current = photos[active];
 
+  const nextPhotos = useMemo(() => {
+    return [
+      photos[(active + 1) % photos.length],
+      photos[(active + 2) % photos.length],
+      photos[(active + 3) % photos.length],
+    ];
+  }, [active]);
+
   useEffect(() => {
-    const timer = setTimeout(() => setIntro(false), 1800);
+    const timer = setTimeout(() => {
+      setIntro(false);
+    }, 1800);
+
     return () => clearTimeout(timer);
   }, []);
 
   const changePhoto = (index: number) => {
-    if (index === active) return;
+    if (index === active || changing) return;
 
     setChanging(true);
+    setLoaded(false);
 
     setTimeout(() => {
       setActive(index);
       setLiked(false);
-      setChanging(false);
-    }, 250);
+
+      setTimeout(() => {
+        setChanging(false);
+      }, 80);
+    }, 220);
   };
 
   const randomPhoto = () => {
-    if (photos.length < 2) return;
+    if (photos.length <= 1) return;
 
     let next = active;
 
@@ -108,6 +138,7 @@ export default function App() {
   return (
     <>
       <style>{`
+
         * {
           box-sizing: border-box;
         }
@@ -118,29 +149,56 @@ export default function App() {
 
         body {
           margin: 0;
-          background: #070707;
+          background: #060606;
+          color: white;
+          font-family: Inter, Arial, sans-serif;
         }
+
+        button,
+        a {
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        button {
+          font-family: inherit;
+        }
+
+        /* =========================================
+           APP
+        ========================================= */
 
         .night-app {
           min-height: 100vh;
           overflow: hidden;
           background:
-            radial-gradient(circle at 80% 10%, rgba(120, 80, 255, .10), transparent 28%),
-            radial-gradient(circle at 10% 55%, rgba(255, 180, 60, .07), transparent 25%),
-            #070707;
-          color: #fff;
-          font-family: Inter, Arial, sans-serif;
+            radial-gradient(
+              circle at 80% 10%,
+              rgba(130, 90, 255, .11),
+              transparent 30%
+            ),
+            radial-gradient(
+              circle at 10% 55%,
+              rgba(255, 180, 60, .06),
+              transparent 25%
+            ),
+            #060606;
         }
+
+        /* =========================================
+           INTRO
+        ========================================= */
 
         .intro {
           position: fixed;
           inset: 0;
-          z-index: 999;
+          z-index: 9999;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #070707;
-          transition: opacity .7s ease, visibility .7s ease;
+          background: #060606;
+          transition:
+            opacity .7s ease,
+            visibility .7s ease;
         }
 
         .intro.hide {
@@ -155,29 +213,29 @@ export default function App() {
         }
 
         .intro-logo {
-          width: 58px;
-          height: 58px;
-          margin: 0 auto 24px;
-          border: 1px solid rgba(255,255,255,.25);
-          border-radius: 50%;
+          width: 60px;
+          height: 60px;
+          margin: 0 auto 25px;
           display: grid;
           place-items: center;
+          border: 1px solid rgba(255,255,255,.25);
+          border-radius: 50%;
           font-size: 11px;
           font-weight: 900;
           letter-spacing: .2em;
         }
 
         .intro-small {
-          color: rgba(255,255,255,.4);
-          font-size: 9px;
+          color: rgba(255,255,255,.38);
+          font-size: 8px;
           letter-spacing: .45em;
           text-transform: uppercase;
         }
 
         .intro-title {
           margin: 12px 0 0;
-          font-size: clamp(42px, 12vw, 90px);
-          line-height: .85;
+          font-size: clamp(45px, 13vw, 95px);
+          line-height: .8;
           letter-spacing: -.08em;
           font-weight: 900;
         }
@@ -185,13 +243,18 @@ export default function App() {
         @keyframes introIn {
           from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(25px);
           }
+
           to {
             opacity: 1;
             transform: translateY(0);
           }
         }
+
+        /* =========================================
+           HERO
+        ========================================= */
 
         .hero {
           position: relative;
@@ -199,6 +262,7 @@ export default function App() {
           isolation: isolate;
           display: flex;
           flex-direction: column;
+          overflow: hidden;
         }
 
         .hero-image {
@@ -210,12 +274,15 @@ export default function App() {
           object-fit: cover;
           object-position: center;
           transform: scale(1.02);
-          transition: opacity .4s ease, transform 1.2s ease;
+          opacity: 1;
+          transition:
+            opacity .45s ease,
+            transform 1s ease;
         }
 
         .hero-image.changing {
           opacity: 0;
-          transform: scale(1.07);
+          transform: scale(1.08);
         }
 
         .hero-overlay {
@@ -223,38 +290,78 @@ export default function App() {
           inset: 0;
           z-index: -4;
           background:
-            linear-gradient(to bottom,
-              rgba(0,0,0,.55) 0%,
-              rgba(0,0,0,.08) 32%,
-              rgba(0,0,0,.18) 55%,
-              rgba(7,7,7,.96) 100%);
+            linear-gradient(
+              to bottom,
+              rgba(0,0,0,.52),
+              rgba(0,0,0,.08) 35%,
+              rgba(0,0,0,.25) 60%,
+              #060606 100%
+            );
         }
 
         .hero-side {
           position: absolute;
           inset: 0;
           z-index: -3;
-          background: linear-gradient(
-            90deg,
-            rgba(0,0,0,.6),
-            transparent 55%
-          );
+          background:
+            linear-gradient(
+              90deg,
+              rgba(0,0,0,.65),
+              transparent 65%
+            );
         }
+
+        /* =========================================
+           GRAIN
+        ========================================= */
 
         .grain {
           position: absolute;
           inset: 0;
-          z-index: 1;
+          z-index: 2;
           pointer-events: none;
           opacity: .055;
+
           background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
+
+        /* =========================================
+           MOON
+        ========================================= */
+
+        .moon {
+          position: absolute;
+          z-index: 1;
+          top: 115px;
+          right: 10%;
+          width: 65px;
+          height: 65px;
+          border-radius: 50%;
+          background: rgba(255,255,255,.92);
+          box-shadow:
+            0 0 40px rgba(255,255,255,.18),
+            0 0 100px rgba(140,110,255,.15);
+        }
+
+        .moon::after {
+          content: "";
+          position: absolute;
+          top: -5px;
+          left: 14px;
+          width: 65px;
+          height: 65px;
+          border-radius: 50%;
+          background: #161619;
+        }
+
+        /* =========================================
+           NAV
+        ========================================= */
 
         .navbar {
           position: relative;
           z-index: 10;
-          width: 100%;
-          padding: 22px 22px;
+          padding: 22px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -271,14 +378,14 @@ export default function App() {
         .brand-icon {
           width: 36px;
           height: 36px;
-          border: 1px solid rgba(255,255,255,.4);
-          border-radius: 50%;
           display: grid;
           place-items: center;
+          border: 1px solid rgba(255,255,255,.35);
+          border-radius: 50%;
+          background: rgba(0,0,0,.15);
+          backdrop-filter: blur(12px);
           font-size: 9px;
           font-weight: 900;
-          letter-spacing: .08em;
-          backdrop-filter: blur(10px);
         }
 
         .brand-text {
@@ -297,47 +404,27 @@ export default function App() {
 
         .nav-pill {
           padding: 9px 14px;
-          border: 1px solid rgba(255,255,255,.18);
+          border: 1px solid rgba(255,255,255,.2);
           border-radius: 999px;
           background: rgba(0,0,0,.2);
-          color: rgba(255,255,255,.8);
-          font-size: 9px;
+          color: white;
+          text-decoration: none;
+          font-size: 8px;
           font-weight: 800;
           letter-spacing: .18em;
-          text-decoration: none;
-          backdrop-filter: blur(14px);
+          text-transform: uppercase;
+          backdrop-filter: blur(15px);
         }
 
-        .moon {
-          position: absolute;
-          z-index: 0;
-          top: 105px;
-          right: 9%;
-          width: 65px;
-          height: 65px;
-          border-radius: 50%;
-          background: rgba(255,255,255,.92);
-          box-shadow:
-            0 0 40px rgba(255,255,255,.2),
-            0 0 100px rgba(150,120,255,.15);
-        }
-
-        .moon::after {
-          content: "";
-          position: absolute;
-          top: -6px;
-          left: 14px;
-          width: 65px;
-          height: 65px;
-          border-radius: 50%;
-          background: rgba(18,18,22,.85);
-        }
+        /* =========================================
+           HERO CONTENT
+        ========================================= */
 
         .hero-content {
           position: relative;
           z-index: 5;
           margin-top: auto;
-          padding: 20px 22px 32px;
+          padding: 20px 22px 30px;
         }
 
         .eyebrow {
@@ -345,22 +432,22 @@ export default function App() {
           align-items: center;
           gap: 10px;
           color: rgba(255,255,255,.65);
-          font-size: 9px;
+          font-size: 8px;
           font-weight: 800;
-          letter-spacing: .38em;
+          letter-spacing: .4em;
           text-transform: uppercase;
         }
 
         .eyebrow-line {
-          width: 30px;
+          width: 28px;
           height: 1px;
-          background: rgba(255,255,255,.55);
+          background: rgba(255,255,255,.5);
         }
 
         .hero-title {
           max-width: 900px;
           margin: 16px 0 0;
-          font-size: clamp(62px, 17vw, 175px);
+          font-size: clamp(62px, 17vw, 170px);
           line-height: .76;
           letter-spacing: -.085em;
           font-weight: 900;
@@ -368,32 +455,36 @@ export default function App() {
 
         .hero-title span {
           display: block;
-          color: rgba(255,255,255,.5);
+          color: rgba(255,255,255,.48);
         }
 
         .hero-description {
-          max-width: 500px;
+          max-width: 480px;
           margin-top: 22px;
           color: rgba(255,255,255,.72);
-          font-size: 14px;
-          line-height: 1.7;
+          font-size: 13px;
+          line-height: 1.8;
         }
 
+        /* =========================================
+           BUTTONS
+        ========================================= */
+
         .hero-actions {
-          margin-top: 25px;
+          margin-top: 24px;
           display: flex;
           flex-wrap: wrap;
-          gap: 9px;
+          gap: 8px;
         }
 
         .action {
           border: 1px solid rgba(255,255,255,.22);
           border-radius: 999px;
-          padding: 13px 18px;
-          color: white;
+          padding: 13px 17px;
           background: rgba(0,0,0,.22);
+          color: white;
           backdrop-filter: blur(15px);
-          font-size: 9px;
+          font-size: 8px;
           font-weight: 900;
           letter-spacing: .18em;
           text-transform: uppercase;
@@ -401,20 +492,24 @@ export default function App() {
           transition: .25s ease;
         }
 
-        .action.primary {
-          background: white;
-          color: #080808;
-          border-color: white;
-        }
-
         .action:hover {
           transform: translateY(-2px);
           background: white;
-          color: #080808;
+          color: #060606;
         }
 
+        .action.primary {
+          background: white;
+          color: #060606;
+          border-color: white;
+        }
+
+        /* =========================================
+           COUNTER
+        ========================================= */
+
         .hero-bottom {
-          margin-top: 30px;
+          margin-top: 28px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -430,13 +525,13 @@ export default function App() {
         }
 
         .counter-muted {
-          color: rgba(255,255,255,.35);
+          color: rgba(255,255,255,.3);
         }
 
         .progress {
           width: 65px;
           height: 1px;
-          background: rgba(255,255,255,.22);
+          background: rgba(255,255,255,.25);
         }
 
         .progress-fill {
@@ -446,79 +541,113 @@ export default function App() {
         }
 
         .scroll {
-          color: rgba(255,255,255,.4);
+          color: rgba(255,255,255,.35);
           font-size: 8px;
           letter-spacing: .3em;
           text-transform: uppercase;
         }
 
+        /* =========================================
+           FLOATING CARD
+        ========================================= */
+
         .floating-card {
           position: absolute;
           right: 22px;
           bottom: 32px;
-          z-index: 6;
-          width: 150px;
-          padding: 12px;
+          z-index: 7;
+          width: 145px;
+          padding: 10px;
           border: 1px solid rgba(255,255,255,.18);
           border-radius: 15px;
-          background: rgba(10,10,10,.3);
+          background: rgba(10,10,10,.35);
           backdrop-filter: blur(18px);
         }
 
         .floating-card img {
-          display: block;
           width: 100%;
-          height: 90px;
-          object-fit: cover;
+          height: 82px;
+          display: block;
           border-radius: 9px;
+          object-fit: cover;
         }
 
-        .floating-card p {
-          margin: 9px 0 0;
-          color: rgba(255,255,255,.6);
+        .floating-label {
+          margin-top: 8px;
+          color: rgba(255,255,255,.4);
           font-size: 7px;
           letter-spacing: .2em;
           text-transform: uppercase;
         }
 
-        .floating-card strong {
-          display: block;
+        .floating-title {
           margin-top: 4px;
-          font-size: 11px;
+          font-size: 10px;
+          font-weight: 800;
         }
+
+        /* =========================================
+           SECTIONS
+        ========================================= */
 
         .section {
           padding: 90px 22px;
         }
 
-        .section-head {
-          display: flex;
-          align-items: end;
-          justify-content: space-between;
-          gap: 20px;
-          margin-bottom: 28px;
-        }
-
         .label {
-          color: rgba(255,255,255,.35);
+          color: rgba(255,255,255,.32);
           font-size: 8px;
           font-weight: 900;
           letter-spacing: .35em;
           text-transform: uppercase;
         }
 
-        .section-title {
-          margin: 10px 0 0;
-          font-size: clamp(40px, 10vw, 85px);
+        .story {
+          display: grid;
+          gap: 30px;
+          max-width: 1100px;
+          margin: auto;
+        }
+
+        .story-title {
+          margin-top: 12px;
+          font-size: clamp(40px, 9vw, 80px);
           line-height: .9;
           letter-spacing: -.07em;
           font-weight: 900;
         }
 
+        .story-text {
+          max-width: 550px;
+          color: rgba(255,255,255,.43);
+          font-size: 14px;
+          line-height: 1.9;
+        }
+
+        /* =========================================
+           GALLERY
+        ========================================= */
+
+        .section-head {
+          margin-bottom: 25px;
+          display: flex;
+          align-items: end;
+          justify-content: space-between;
+          gap: 20px;
+        }
+
+        .section-title {
+          margin-top: 10px;
+          font-size: clamp(42px, 10vw, 90px);
+          line-height: .85;
+          letter-spacing: -.075em;
+          font-weight: 900;
+        }
+
         .featured {
           position: relative;
+          height: min(70vh, 700px);
           overflow: hidden;
-          height: min(72vh, 700px);
           border-radius: 18px;
           cursor: pointer;
         }
@@ -537,11 +666,12 @@ export default function App() {
         .featured-gradient {
           position: absolute;
           inset: 0;
-          background: linear-gradient(
-            to top,
-            rgba(0,0,0,.85),
-            transparent 60%
-          );
+          background:
+            linear-gradient(
+              to top,
+              rgba(0,0,0,.88),
+              transparent 65%
+            );
         }
 
         .featured-info {
@@ -553,11 +683,15 @@ export default function App() {
 
         .featured-title {
           margin: 7px 0 0;
-          font-size: clamp(30px, 7vw, 70px);
+          font-size: clamp(30px, 7vw, 75px);
           line-height: .9;
           letter-spacing: -.06em;
           font-weight: 900;
         }
+
+        /* =========================================
+           THUMBNAILS
+        ========================================= */
 
         .gallery {
           display: grid;
@@ -570,21 +704,22 @@ export default function App() {
           position: relative;
           aspect-ratio: 1 / 1.2;
           overflow: hidden;
+          padding: 0;
           border: 1px solid transparent;
           border-radius: 10px;
           background: #111;
           cursor: pointer;
-          opacity: .55;
+          opacity: .52;
           transition: .3s ease;
         }
 
+        .thumb:hover,
         .thumb.active {
           opacity: 1;
-          border-color: rgba(255,255,255,.8);
         }
 
-        .thumb:hover {
-          opacity: 1;
+        .thumb.active {
+          border-color: rgba(255,255,255,.85);
         }
 
         .thumb img {
@@ -602,62 +737,58 @@ export default function App() {
           position: absolute;
           left: 10px;
           bottom: 10px;
+          color: white;
           font-size: 8px;
           font-weight: 900;
-          letter-spacing: .15em;
           text-shadow: 0 2px 10px black;
         }
 
-        .story {
-          display: grid;
-          gap: 30px;
-          max-width: 1100px;
-          margin: auto;
-        }
-
-        .story-big {
-          font-size: clamp(34px, 7vw, 72px);
-          line-height: .95;
-          letter-spacing: -.065em;
-          font-weight: 900;
-        }
-
-        .story-text {
-          max-width: 560px;
-          color: rgba(255,255,255,.45);
-          font-size: 15px;
-          line-height: 1.9;
-        }
+        /* =========================================
+           RANDOM
+        ========================================= */
 
         .random-box {
           position: relative;
           overflow: hidden;
-          padding: 80px 25px;
+          padding: 80px 20px;
           border: 1px solid rgba(255,255,255,.1);
           border-radius: 22px;
           text-align: center;
-          background: #0d0d0f;
+          background: #0c0c0e;
         }
 
         .random-glow {
           position: absolute;
-          width: 250px;
-          height: 250px;
           left: 50%;
           top: 50%;
+          width: 250px;
+          height: 250px;
           transform: translate(-50%, -50%);
           background: rgba(130,90,255,.15);
           filter: blur(80px);
-          pointer-events: none;
         }
 
         .random-title {
           position: relative;
-          font-size: clamp(48px, 12vw, 100px);
-          line-height: .82;
+          margin: 15px 0 0;
+          font-size: clamp(50px, 12vw, 105px);
+          line-height: .8;
           letter-spacing: -.08em;
           font-weight: 900;
         }
+
+        .random-text {
+          position: relative;
+          max-width: 420px;
+          margin: 25px auto;
+          color: rgba(255,255,255,.4);
+          font-size: 13px;
+          line-height: 1.8;
+        }
+
+        /* =========================================
+           FOOTER
+        ========================================= */
 
         .footer {
           padding: 40px 22px;
@@ -665,25 +796,29 @@ export default function App() {
           display: flex;
           justify-content: space-between;
           gap: 20px;
-          color: rgba(255,255,255,.3);
+          color: rgba(255,255,255,.28);
           font-size: 8px;
           letter-spacing: .25em;
           text-transform: uppercase;
         }
 
+        /* =========================================
+           LIGHTBOX
+        ========================================= */
+
         .lightbox {
           position: fixed;
           inset: 0;
-          z-index: 1000;
+          z-index: 10000;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 20px;
-          background: rgba(0,0,0,.96);
+          background: rgba(0,0,0,.97);
         }
 
         .lightbox img {
-          max-width: 92vw;
+          max-width: 94vw;
           max-height: 82vh;
           object-fit: contain;
           border-radius: 8px;
@@ -706,8 +841,8 @@ export default function App() {
         .light-arrow {
           position: absolute;
           top: 50%;
-          width: 45px;
-          height: 45px;
+          width: 46px;
+          height: 46px;
           border: 1px solid rgba(255,255,255,.2);
           border-radius: 50%;
           background: rgba(255,255,255,.05);
@@ -717,18 +852,17 @@ export default function App() {
         }
 
         .light-arrow.left {
-          left: 15px;
+          left: 18px;
         }
 
         .light-arrow.right {
-          right: 15px;
+          right: 18px;
         }
 
         .light-info {
           position: absolute;
           left: 20px;
           bottom: 20px;
-          color: white;
         }
 
         .light-info small {
@@ -743,7 +877,12 @@ export default function App() {
           font-size: 20px;
         }
 
+        /* =========================================
+           DESKTOP
+        ========================================= */
+
         @media (min-width: 700px) {
+
           .navbar {
             padding: 28px 45px;
           }
@@ -753,7 +892,7 @@ export default function App() {
           }
 
           .moon {
-            top: 125px;
+            top: 130px;
             right: 13%;
             width: 85px;
             height: 85px;
@@ -774,14 +913,14 @@ export default function App() {
             padding: 130px 45px;
           }
 
-          .gallery {
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-          }
-
           .story {
             grid-template-columns: .8fr 1.2fr;
             align-items: center;
+          }
+
+          .gallery {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
           }
 
           .footer {
@@ -789,7 +928,12 @@ export default function App() {
           }
         }
 
+        /* =========================================
+           MOBILE
+        ========================================= */
+
         @media (max-width: 600px) {
+
           .floating-card {
             display: none;
           }
@@ -799,7 +943,7 @@ export default function App() {
           }
 
           .hero-title {
-            max-width: 100%;
+            font-size: clamp(58px, 17vw, 95px);
           }
 
           .featured {
@@ -809,16 +953,28 @@ export default function App() {
           .light-arrow {
             display: none;
           }
+
+          .hero-description {
+            font-size: 12px;
+            max-width: 340px;
+          }
+
         }
+
       `}</style>
 
       <div className="night-app">
 
-        {/* INTRO */}
+        {/* =====================================
+            INTRO
+        ===================================== */}
 
         <div className={`intro ${!intro ? "hide" : ""}`}>
           <div className="intro-inner">
-            <div className="intro-logo">IM</div>
+
+            <div className="intro-logo">
+              IM
+            </div>
 
             <div className="intro-small">
               A visual archive
@@ -827,10 +983,13 @@ export default function App() {
             <h1 className="intro-title">
               Info Malam
             </h1>
+
           </div>
         </div>
 
-        {/* HERO */}
+        {/* =====================================
+            HERO
+        ===================================== */}
 
         <section className="hero">
 
@@ -838,15 +997,15 @@ export default function App() {
             src={current.url}
             alt={current.title}
             className={`hero-image ${changing ? "changing" : ""}`}
+            onLoad={() => setLoaded(true)}
           />
 
           <div className="hero-overlay" />
           <div className="hero-side" />
           <div className="grain" />
-
           <div className="moon" />
 
-          {/* NAVBAR */}
+          {/* NAV */}
 
           <nav className="navbar">
 
@@ -879,15 +1038,24 @@ export default function App() {
           <div className="hero-content" id="home">
 
             <div className="eyebrow">
+
               <span className="eyebrow-line" />
-              {current.year} / {current.place}
+
+              2026 / INDONESIA
+
             </div>
 
             <h1 className="hero-title">
-              {current.title.split(" ").slice(0, 1).join(" ")}
+
+              {current.title.split(" ")[0]}
+
               <span>
-                {current.title.split(" ").slice(1).join(" ") || "Night"}
+                {current.title
+                  .split(" ")
+                  .slice(1)
+                  .join(" ") || "Night"}
               </span>
+
             </h1>
 
             <p className="hero-description">
@@ -929,12 +1097,15 @@ export default function App() {
                 </span>
 
                 <div className="progress">
+
                   <div
                     className="progress-fill"
                     style={{
-                      width: `${((active + 1) / photos.length) * 100}%`,
+                      width:
+                        `${((active + 1) / photos.length) * 100}%`,
                     }}
                   />
+
                 </div>
 
                 <span className="counter-muted">
@@ -951,58 +1122,65 @@ export default function App() {
 
           </div>
 
-          {/* FLOATING PREVIEW */}
+          {/* NEXT PHOTO */}
 
-          <div className="floating-card">
+          {loaded && nextPhotos[0] && (
 
-            <img
-              src={photos[(active + 1) % photos.length].url}
-              alt=""
-            />
+            <div className="floating-card">
 
-            <p>
-              Next memory
-            </p>
+              <img
+                src={nextPhotos[0].url}
+                alt=""
+              />
 
-            <strong>
-              {photos[(active + 1) % photos.length].title}
-            </strong>
+              <div className="floating-label">
+                Next memory
+              </div>
 
-          </div>
+              <div className="floating-title">
+                {nextPhotos[0].title}
+              </div>
+
+            </div>
+
+          )}
 
         </section>
 
-        {/* STORY */}
+        {/* =====================================
+            STORY
+        ===================================== */}
 
         <section className="section">
 
           <div className="story">
 
             <div>
+
               <div className="label">
                 01 — The Story
               </div>
 
-              <h2 className="story-big">
+              <h2 className="story-title">
                 Some nights
                 <br />
                 stay with us.
               </h2>
+
             </div>
 
             <div>
 
               <p className="story-text">
                 Info Malam adalah tempat kecil untuk menyimpan
-                momen-momen yang terjadi setelah matahari terbenam.
-                Tidak perlu momen besar.
-                Terkadang sebuah foto sederhana sudah cukup
-                untuk mengingat satu malam.
+                momen-momen yang terjadi setelah matahari
+                terbenam.
               </p>
 
-              <p className="story-text" style={{ marginTop: 20 }}>
-                Scroll, pilih foto, atau tekan random dan biarkan
-                malam memilih cerita untukmu.
+              <p className="story-text">
+                Tidak harus sempurna. Tidak harus direncanakan.
+                Terkadang sebuah foto sederhana sudah cukup
+                untuk mengingat satu malam.
               </p>
 
             </div>
@@ -1011,13 +1189,16 @@ export default function App() {
 
         </section>
 
-        {/* GALLERY */}
+        {/* =====================================
+            GALLERY
+        ===================================== */}
 
         <section className="section" id="gallery">
 
           <div className="section-head">
 
             <div>
+
               <div className="label">
                 02 — The Archive
               </div>
@@ -1025,6 +1206,7 @@ export default function App() {
               <h2 className="section-title">
                 Our Night.
               </h2>
+
             </div>
 
             <div className="label">
@@ -1050,7 +1232,7 @@ export default function App() {
             <div className="featured-info">
 
               <div className="label">
-                Featured memory · {current.year}
+                Featured Memory
               </div>
 
               <h3 className="featured-title">
@@ -1061,15 +1243,17 @@ export default function App() {
 
           </div>
 
-          {/* THUMBNAILS */}
+          {/* ALL PHOTOS */}
 
           <div className="gallery">
 
             {photos.map((photo, index) => (
 
               <button
-                key={photo.url}
-                className={`thumb ${index === active ? "active" : ""}`}
+                key={photo.id}
+                className={`thumb ${
+                  index === active ? "active" : ""
+                }`}
                 onClick={() => changePhoto(index)}
               >
 
@@ -1091,7 +1275,9 @@ export default function App() {
 
         </section>
 
-        {/* RANDOM */}
+        {/* =====================================
+            RANDOM
+        ===================================== */}
 
         <section className="section">
 
@@ -1109,26 +1295,13 @@ export default function App() {
               night choose.
             </h2>
 
-            <p
-              style={{
-                position: "relative",
-                maxWidth: 430,
-                margin: "24px auto 0",
-                color: "rgba(255,255,255,.42)",
-                fontSize: 13,
-                lineHeight: 1.8,
-              }}
-            >
+            <p className="random-text">
               Tidak tahu foto mana yang ingin dilihat?
               Biarkan Info Malam memilihkan satu untukmu.
             </p>
 
             <button
               className="action primary"
-              style={{
-                position: "relative",
-                marginTop: 25,
-              }}
               onClick={randomPhoto}
             >
               ✦ &nbsp; Surprise Me
@@ -1138,7 +1311,9 @@ export default function App() {
 
         </section>
 
-        {/* FOOTER */}
+        {/* =====================================
+            FOOTER
+        ===================================== */}
 
         <footer className="footer">
 
@@ -1152,7 +1327,9 @@ export default function App() {
 
         </footer>
 
-        {/* LIGHTBOX */}
+        {/* =====================================
+            LIGHTBOX
+        ===================================== */}
 
         {lightbox && (
 
@@ -1197,7 +1374,9 @@ export default function App() {
             <div className="light-info">
 
               <small>
-                {current.place} · {current.year}
+                Memory {String(active + 1).padStart(2, "0")}
+                {" · "}
+                2026
               </small>
 
               <h3>
