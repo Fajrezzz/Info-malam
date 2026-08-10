@@ -30,7 +30,7 @@ function useInView<T extends HTMLElement>() {
 }
 
 /* =========================
-   GALLERY ITEM (semua ukuran sama)
+   GALLERY ITEM (NO BIG)
 ========================= */
 const GalleryItem = memo(function GalleryItem({
   photo,
@@ -152,9 +152,7 @@ function StoryBar({
                   background: isActive
                     ? `conic-gradient(from ${angle}deg, ${borderColor}, transparent 70%, ${borderColor})`
                     : "transparent",
-                  boxShadow: isActive
-                    ? `0 0 15px ${borderColor}50`
-                    : "none",
+                  boxShadow: isActive ? `0 0 15px ${borderColor}50` : "none",
                 }}
               >
                 <div className="w-full h-full rounded-full overflow-hidden border-2 border-black/40">
@@ -199,9 +197,7 @@ function SpeakerIcon({ playing }: { playing: boolean }) {
           <path d="M19.07 4.93a10 10 0 010 14.14" />
         </>
       )}
-      {!playing && (
-        <line x1="23" y1="9" x2="17" y2="15" />
-      )}
+      {!playing && <line x1="23" y1="9" x2="17" y2="15" />}
     </svg>
   );
 }
@@ -663,7 +659,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Gallery + Story Bar */}
+      {/* Gallery */}
       <section
         id="gallery"
         className="relative z-10 px-5 py-20 sm:px-8 lg:px-14 lg:py-32"
@@ -704,7 +700,7 @@ export default function App() {
             onSelect={openPhoto}
           />
 
-          {/* Grid foto (semua ukuran sama) */}
+          {/* Grid foto - TANPA BIG */}
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-8 lg:gap-10">
             {photos.map((photo, index) => (
               <GalleryItem
