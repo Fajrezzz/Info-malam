@@ -6,6 +6,7 @@ export default function App() {
   const [selected, setSelected] = useState<Photo | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
   const [rgb, setRgb] = useState(0);
+  const [showTop, setShowTop] = useState(false);
 
   /* =========================
      WELCOME
@@ -27,7 +28,7 @@ export default function App() {
     let frame: number;
 
     const animate = () => {
-      setRgb((value) => (value + 0.25) % 360);
+      setRgb((value) => (value + 0.12) % 360);
       frame = requestAnimationFrame(animate);
     };
 
@@ -35,6 +36,61 @@ export default function App() {
 
     return () => cancelAnimationFrame(frame);
   }, []);
+
+  /* =========================
+     SCROLL
+  ========================= */
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowTop(window.scrollY > 600);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  /* =========================
+     KEYBOARD
+  ========================= */
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (!selected) return;
+
+      if (e.key === "Escape") {
+        setSelected(null);
+      }
+
+      if (e.key === "ArrowRight") {
+        nextPhoto();
+      }
+
+      if (e.key === "ArrowLeft") {
+        previousPhoto();
+      }
+    };
+
+    window.addEventListener("keydown", handleKey);
+
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, [selected, activeIndex]);
+
+  /* =========================
+     COLORS
+  ========================= */
+
+  const color1 = `hsl(${rgb}, 100%, 65%)`;
+  const color2 = `hsl(${(rgb + 110) % 360}, 100%, 65%)`;
+
+  /* =========================
+     PHOTO
+  ========================= */
 
   const activePhoto = photos[activeIndex];
 
@@ -45,12 +101,8 @@ export default function App() {
     ];
   }, [activeIndex]);
 
-  const rgb1 = `hsl(${rgb}, 100%, 60%)`;
-  const rgb2 = `hsl(${(rgb + 120) % 360}, 100%, 60%)`;
-  const rgb3 = `hsl(${(rgb + 240) % 360}, 100%, 60%)`;
-
   /* =========================
-     RANDOM PHOTO
+     RANDOM
   ========================= */
 
   const randomPhoto = () => {
@@ -68,37 +120,78 @@ export default function App() {
     });
   };
 
+  /* =========================
+     NEXT
+  ========================= */
+
+  function nextPhoto() {
+    const next = (activeIndex + 1) % photos.length;
+
+    setActiveIndex(next);
+    setSelected(photos[next]);
+  }
+
+  /* =========================
+     PREVIOUS
+  ========================= */
+
+  function previousPhoto() {
+    const previous =
+      (activeIndex - 1 + photos.length) % photos.length;
+
+    setActiveIndex(previous);
+    setSelected(photos[previous]);
+  }
+
+  /* =========================
+     OPEN PHOTO
+  ========================= */
+
+  const openPhoto = (photo: Photo) => {
+    const index = photos.findIndex(
+      (item) => item.public_id === photo.public_id
+    );
+
+    setActiveIndex(index);
+    setSelected(photo);
+  };
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#050507] text-white">
 
-      {/* =========================
-          BACKGROUND RGB
-      ========================= */}
+      {/* ==================================================
+          AMBIENT RGB
+      ================================================== */}
 
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
 
         <div
-          className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full blur-[150px] opacity-[0.08]"
-          style={{ background: rgb1 }}
+          className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full blur-[160px] opacity-[0.08]"
+          style={{ background: color1 }}
         />
 
         <div
-          className="absolute -right-40 top-[45%] h-[500px] w-[500px] rounded-full blur-[150px] opacity-[0.06]"
-          style={{ background: rgb2 }}
+          className="absolute -right-40 top-[40%] h-[500px] w-[500px] rounded-full blur-[160px] opacity-[0.07]"
+          style={{ background: color2 }}
+        />
+
+        <div
+          className="absolute bottom-[-250px] left-[30%] h-[500px] w-[500px] rounded-full blur-[160px] opacity-[0.05]"
+          style={{ background: color1 }}
         />
 
       </div>
 
-      {/* =========================
+      {/* ==================================================
           WELCOME
-      ========================= */}
+      ================================================== */}
 
       {showWelcome && (
         <div className="fixed inset-0 z-[999] grid place-items-center bg-[#050507]">
 
           <div
-            className="absolute h-80 w-80 rounded-full blur-[120px] opacity-10"
-            style={{ background: rgb1 }}
+            className="absolute h-80 w-80 rounded-full blur-[130px] opacity-10"
+            style={{ background: color1 }}
           />
 
           <div className="relative text-center">
@@ -110,7 +203,7 @@ export default function App() {
             <h1
               className="mt-7 text-6xl font-black leading-[0.8] tracking-[-0.09em] sm:text-8xl"
               style={{
-                textShadow: `0 0 35px ${rgb1}30`,
+                textShadow: `0 0 35px ${color1}30`,
               }}
             >
               Info
@@ -121,7 +214,7 @@ export default function App() {
             <div
               className="mx-auto mt-9 h-px w-20"
               style={{
-                background: `linear-gradient(90deg, ${rgb1}, ${rgb2}, ${rgb3})`,
+                background: `linear-gradient(90deg, ${color1}, ${color2})`,
               }}
             />
 
@@ -133,16 +226,16 @@ export default function App() {
         </div>
       )}
 
-      {/* =========================
+      {/* ==================================================
           NAVBAR
-      ========================= */}
+      ================================================== */}
 
       <nav className="fixed left-0 right-0 top-0 z-50 px-4 py-4 sm:px-8">
 
         <div
           className="mx-auto flex max-w-7xl items-center justify-between rounded-full border bg-black/50 px-5 py-3 backdrop-blur-xl"
           style={{
-            borderColor: `${rgb1}25`,
+            borderColor: `${color1}25`,
           }}
         >
 
@@ -153,7 +246,7 @@ export default function App() {
             Info Malam
           </a>
 
-          <div className="flex items-center gap-5 text-[10px] font-bold uppercase tracking-[0.2em]">
+          <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.2em]">
 
             <a
               href="#gallery"
@@ -165,7 +258,7 @@ export default function App() {
             <span
               className="rounded-full border px-3 py-1 text-white/50"
               style={{
-                borderColor: `${rgb1}30`,
+                borderColor: `${color1}30`,
               }}
             >
               {photos.length}
@@ -176,9 +269,9 @@ export default function App() {
         </div>
       </nav>
 
-      {/* =========================
+      {/* ==================================================
           HERO
-      ========================= */}
+      ================================================== */}
 
       <section
         id="home"
@@ -188,19 +281,19 @@ export default function App() {
         <img
           src={activePhoto.url}
           alt={activePhoto.public_id}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover transition duration-1000"
         />
 
         <div className="absolute inset-0 bg-black/50" />
 
         <div
-          className="absolute inset-0 opacity-15"
+          className="absolute inset-0 opacity-20"
           style={{
             background: `linear-gradient(
               135deg,
-              ${rgb1},
+              ${color1},
               transparent 40%,
-              ${rgb2}
+              ${color2}
             )`,
           }}
         />
@@ -209,23 +302,44 @@ export default function App() {
 
         <div className="relative z-10 mx-auto w-full max-w-7xl">
 
-          <p className="mb-5 text-[10px] font-bold uppercase tracking-[0.5em] text-white/40">
-            2026 / Indonesia
-          </p>
+          <div className="mb-5 flex items-center gap-3">
 
-          <h1 className="text-[19vw] font-black leading-[0.76] tracking-[-0.09em] sm:text-[13vw] lg:text-[10rem]">
+            <span
+              className="h-2 w-2 animate-pulse rounded-full"
+              style={{
+                background: color1,
+                boxShadow: `0 0 15px ${color1}`,
+              }}
+            />
+
+            <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-white/40">
+              2026 / Indonesia
+            </p>
+
+          </div>
+
+          <h1
+            className="text-[19vw] font-black leading-[0.76] tracking-[-0.09em] sm:text-[13vw] lg:text-[10rem]"
+            style={{
+              textShadow: `0 0 50px ${color1}20`,
+            }}
+          >
             Malam
             <br />
 
+            {/* BERSAMA — WHITE */}
             <span
+              className="inline-block text-white"
               style={{
-                background: `linear-gradient(90deg, white, ${rgb1}, white)`,
-                WebkitBackgroundClip: "text",
-                color: "transparent",
+                textShadow: `
+                  0 0 15px ${color1}40,
+                  0 0 35px ${color2}20
+                `,
               }}
             >
               Bersama.
             </span>
+
           </h1>
 
           <div className="mt-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
@@ -237,10 +351,10 @@ export default function App() {
 
             <button
               onClick={randomPhoto}
-              className="w-fit rounded-full px-7 py-4 text-xs font-black uppercase tracking-[0.22em] text-black transition hover:scale-105"
+              className="w-fit rounded-full px-7 py-4 text-xs font-black uppercase tracking-[0.22em] text-black transition hover:-translate-y-1 hover:scale-105"
               style={{
-                background: `linear-gradient(90deg, ${rgb1}, ${rgb2})`,
-                boxShadow: `0 0 30px ${rgb1}25`,
+                background: `linear-gradient(90deg, ${color1}, ${color2})`,
+                boxShadow: `0 0 30px ${color1}25`,
               }}
             >
               Foto Acak ↗
@@ -251,62 +365,51 @@ export default function App() {
         </div>
       </section>
 
-      {/* =========================
-          INFO
-      ========================= */}
+      {/* ==================================================
+          INFO CARDS
+      ================================================== */}
 
       <section className="relative z-10 px-5 py-20 sm:px-8 lg:px-14">
 
         <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-3">
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-7 backdrop-blur-xl">
-            <p className="text-[10px] uppercase tracking-[0.4em] text-white/25">
-              Archive
-            </p>
+          {[
+            ["Archive", photos.length, "captured moments"],
+            ["Collection", "Teman", "memories together"],
+            ["Status", "Online", "Cloudinary archive"],
+          ].map(([title, value, desc]) => (
 
-            <p className="mt-4 text-5xl font-black">
-              {photos.length}
-            </p>
+            <div
+              key={String(title)}
+              className="rounded-2xl border border-white/10 bg-white/[0.025] p-7 backdrop-blur-xl transition duration-500 hover:-translate-y-1"
+            >
 
-            <p className="mt-1 text-sm text-white/30">
-              captured moments
-            </p>
-          </div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/25">
+                {title}
+              </p>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-7 backdrop-blur-xl">
-            <p className="text-[10px] uppercase tracking-[0.4em] text-white/25">
-              Collection
-            </p>
+              <p
+                className="mt-4 text-4xl font-black"
+                style={{
+                  textShadow: `0 0 20px ${color1}20`,
+                }}
+              >
+                {value}
+              </p>
 
-            <p className="mt-4 text-3xl font-black">
-              Teman
-            </p>
+              <p className="mt-1 text-sm text-white/30">
+                {desc}
+              </p>
 
-            <p className="mt-1 text-sm text-white/30">
-              memories together
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-7 backdrop-blur-xl">
-            <p className="text-[10px] uppercase tracking-[0.4em] text-white/25">
-              Status
-            </p>
-
-            <p className="mt-4 text-3xl font-black">
-              Online
-            </p>
-
-            <p className="mt-1 text-sm text-white/30">
-              Cloudinary archive
-            </p>
-          </div>
+            </div>
+          ))}
 
         </div>
       </section>
 
-      {/* =========================
+      {/* ==================================================
           GALLERY
-      ========================= */}
+      ================================================== */}
 
       <section
         id="gallery"
@@ -329,8 +432,8 @@ export default function App() {
 
                 <span
                   style={{
-                    color: rgb1,
-                    textShadow: `0 0 25px ${rgb1}25`,
+                    color: color1,
+                    textShadow: `0 0 25px ${color1}25`,
                   }}
                 >
                   cerita.
@@ -341,102 +444,71 @@ export default function App() {
 
             <button
               onClick={randomPhoto}
-              className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 transition hover:text-white"
+              className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 transition hover:border-white/30 hover:text-white"
             >
               Random
             </button>
 
           </div>
 
-          {/* =========================
-              GALLERY GRID
-          ========================= */}
+          {/* PHOTO GRID */}
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:gap-6">
 
             {orderedPhotos.map((photo, index) => {
 
-              const originalIndex = photos.findIndex(
-                (item) => item.public_id === photo.public_id
-              );
-
               const big = index === 0;
 
               return (
-
-                <div
+                <button
                   key={photo.public_id}
+                  onClick={() => openPhoto(photo)}
                   className={`
-                    relative rounded-2xl p-[1px]
+                    group relative overflow-hidden rounded-2xl
+                    border border-white/[0.08]
+                    bg-white/[0.03]
+                    text-left
+                    transition-all duration-500
+                    hover:-translate-y-1
+                    hover:border-white/20
                     ${big ? "col-span-2 row-span-2" : ""}
                   `}
-                  style={{
-                    background: `linear-gradient(
-                      ${rgb + index * 35}deg,
-                      ${rgb1},
-                      transparent 30%,
-                      ${rgb2},
-                      transparent 70%,
-                      ${rgb3}
-                    )`,
-                    backgroundSize: "300% 300%",
-                    boxShadow: `
-                      0 0 10px ${rgb1}20,
-                      0 0 25px ${rgb2}10
-                    `,
-                  }}
                 >
 
-                  {/* RGB INNER FRAME */}
+                  <div className="aspect-[4/5] overflow-hidden">
 
-                  <button
-                    onClick={() => {
-                      setActiveIndex(originalIndex);
-                      setSelected(photo);
-                    }}
-                    className="group relative block w-full overflow-hidden rounded-[15px] bg-[#08080a] text-left"
-                  >
-
-                    <div className="aspect-[4/5] overflow-hidden">
-
-                      <img
-                        src={photo.url}
-                        alt={`Foto ${index + 1}`}
-                        loading={index < 5 ? "eager" : "lazy"}
-                        className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                      />
-
-                    </div>
-
-                    {/* DARK OVERLAY */}
-
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-50" />
-
-                    {/* HOVER RGB GLOW */}
-
-                    <div
-                      className="pointer-events-none absolute inset-0 opacity-0 transition duration-500 group-hover:opacity-100"
-                      style={{
-                        boxShadow: `
-                          inset 0 0 25px ${rgb1}70,
-                          inset 0 0 50px ${rgb2}35
-                        `,
-                      }}
+                    <img
+                      src={photo.url}
+                      alt={`Foto ${index + 1}`}
+                      loading={index < 5 ? "eager" : "lazy"}
+                      className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
                     />
 
-                    {/* PHOTO NUMBER */}
+                  </div>
 
-                    <div className="absolute bottom-4 left-4">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
 
-                      <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/50">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
+                  {/* RGB EDGE */}
 
-                    </div>
+                  <div
+                    className="pointer-events-none absolute inset-0 opacity-0 transition duration-500 group-hover:opacity-100"
+                    style={{
+                      boxShadow: `
+                        inset 0 0 35px ${color1}30,
+                        inset 0 0 70px ${color2}15
+                      `,
+                    }}
+                  />
 
-                  </button>
+                  <div className="absolute bottom-4 left-4">
 
-                </div>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/50">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+
+                  </div>
+
+                </button>
               );
             })}
 
@@ -445,9 +517,9 @@ export default function App() {
         </div>
       </section>
 
-      {/* =========================
+      {/* ==================================================
           FEATURED
-      ========================= */}
+      ================================================== */}
 
       <section className="relative z-10 border-t border-white/10 px-5 py-24 sm:px-8 lg:px-14 lg:py-32">
 
@@ -465,8 +537,8 @@ export default function App() {
 
               <span
                 style={{
-                  color: rgb2,
-                  textShadow: `0 0 25px ${rgb2}30`,
+                  color: color2,
+                  textShadow: `0 0 25px ${color2}25`,
                 }}
               >
                 #{String(activeIndex + 1).padStart(2, "0")}
@@ -481,7 +553,8 @@ export default function App() {
               onClick={() => setSelected(activePhoto)}
               className="mt-7 rounded-full px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-black transition hover:scale-105"
               style={{
-                background: `linear-gradient(90deg, ${rgb1}, ${rgb2})`,
+                background: `linear-gradient(90deg, ${color1}, ${color2})`,
+                boxShadow: `0 0 30px ${color1}20`,
               }}
             >
               Buka fullscreen
@@ -505,9 +578,9 @@ export default function App() {
         </div>
       </section>
 
-      {/* =========================
+      {/* ==================================================
           FOOTER
-      ========================= */}
+      ================================================== */}
 
       <footer className="relative z-10 border-t border-white/10 px-5 py-12 sm:px-8 lg:px-14">
 
@@ -517,55 +590,116 @@ export default function App() {
             Info Malam.
           </p>
 
-          <p className="text-[10px] uppercase tracking-[0.3em] text-white/20">
-            Made from memories — 2026
-          </p>
+          <div className="flex items-center gap-3">
+
+            <span
+              className="h-2 w-2 animate-pulse rounded-full"
+              style={{
+                background: color1,
+                boxShadow: `0 0 15px ${color1}`,
+              }}
+            />
+
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/20">
+              Made from memories — 2026
+            </p>
+
+          </div>
 
         </div>
-
       </footer>
 
-      {/* =========================
+      {/* ==================================================
+          BACK TO TOP
+      ================================================== */}
+
+      {showTop && (
+        <button
+          onClick={() =>
+            window.scrollTo({
+              top: 0,
+              behavior: "smooth",
+            })
+          }
+          className="fixed bottom-6 right-5 z-50 rounded-full border border-white/10 bg-black/70 px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white/60 backdrop-blur-xl transition hover:text-white"
+        >
+          ↑ Top
+        </button>
+      )}
+
+      {/* ==================================================
           LIGHTBOX
-      ========================= */}
+      ================================================== */}
 
       {selected && (
 
         <div
-          className="fixed inset-0 z-[999] grid place-items-center bg-black/95 p-4 backdrop-blur-2xl"
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/95 p-4 backdrop-blur-2xl"
           onClick={() => setSelected(null)}
         >
 
           <div
-            className="absolute inset-0 opacity-[0.07]"
+            className="absolute inset-0 opacity-[0.08]"
             style={{
               background: `radial-gradient(
                 circle at center,
-                ${rgb1},
+                ${color1},
                 transparent 60%
               )`,
             }}
           />
 
+          {/* CLOSE */}
+
           <button
             onClick={() => setSelected(null)}
-            className="absolute right-5 top-5 z-20 rounded-full border border-white/10 bg-black/50 px-5 py-3 text-xs font-bold uppercase tracking-widest text-white/70 backdrop-blur-xl"
+            className="absolute right-5 top-5 z-30 rounded-full border border-white/10 bg-black/60 px-5 py-3 text-xs font-bold uppercase tracking-widest text-white/70 backdrop-blur-xl"
           >
             Tutup ×
           </button>
+
+          {/* PREVIOUS */}
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              previousPhoto();
+            }}
+            className="absolute left-3 z-30 rounded-full border border-white/10 bg-black/60 px-4 py-3 text-xl text-white/70 backdrop-blur-xl transition hover:text-white sm:left-6"
+          >
+            ‹
+          </button>
+
+          {/* IMAGE */}
 
           <img
             src={selected.url}
             alt="Fullscreen"
             onClick={(e) => e.stopPropagation()}
-            className="relative z-10 max-h-[90vh] max-w-full rounded-2xl border border-white/10 object-contain"
+            className="relative z-10 max-h-[85vh] max-w-[85vw] rounded-2xl border border-white/10 object-contain"
             style={{
-              boxShadow: `
-                0 0 40px ${rgb1}20,
-                0 0 80px ${rgb2}10
-              `,
+              boxShadow: `0 0 80px ${color1}15`,
             }}
           />
+
+          {/* NEXT */}
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              nextPhoto();
+            }}
+            className="absolute right-3 z-30 rounded-full border border-white/10 bg-black/60 px-4 py-3 text-xl text-white/70 backdrop-blur-xl transition hover:text-white sm:right-6"
+          >
+            ›
+          </button>
+
+          {/* COUNTER */}
+
+          <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2 rounded-full border border-white/10 bg-black/60 px-5 py-2 text-[10px] font-bold tracking-[0.3em] text-white/50 backdrop-blur-xl">
+            {String(activeIndex + 1).padStart(2, "0")} /{" "}
+            {String(photos.length).padStart(2, "0")}
+          </div>
 
         </div>
       )}
@@ -573,3 +707,5 @@ export default function App() {
     </main>
   );
 }
+
+Ini versi yang menurutku lebih cocok buat web kamu: RGB-nya jadi aksen, bukan warna utama. Gallery juga tetap punya jarak seperti website gallery kamu sebelumnya, dan fullscreen sekarang bisa next/previous tanpa harus keluar-masuk foto.
