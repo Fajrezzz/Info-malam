@@ -1,5 +1,123 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { photos, type Photo } from "./photo";
+
+/* =========================
+   SCROLL REVEAL HOOK
+   Watches an element and flips `inView` to true the moment it
+   scrolls into the viewport (once) — used to fade/slide photos in
+   smoothly instead of them just popping in.
+========================= */
+
+function useInView<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+    );
+
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return { ref, inView };
+}
+
+/* =========================
+   GALLERY ITEM
+   Wrapping each photo in its own component lets each one own its
+   own IntersectionObserver + hook instance.
+========================= */
+
+function GalleryItem({
+  photo,
+  index,
+  big,
+  isActive,
+  rgb,
+  onOpen,
+}: {
+  photo: Photo;
+  index: number;
+  big: boolean;
+  isActive: boolean;
+  rgb: number;
+  onOpen: (photo: Photo) => void;
+}) {
+  const { ref, inView } = useInView<HTMLButtonElement>();
+
+  // Each frame's rainbow rotates at a slightly different phase so
+  // the whole grid doesn't pulse in unison.
+  const frameAngle = (rgb + index * 47) % 360;
+  const frameA = `hsl(${frameAngle}, 100%, 65%)`;
+  const frameB = `hsl(${(frameAngle + 90) % 360}, 100%, 65%)`;
+  const frameC = `hsl(${(frameAngle + 180) % 360}, 100%, 65%)`;
+  const frameD = `hsl(${(frameAngle + 270) % 360}, 100%, 65%)`;
+
+  return (
+    <button
+      ref={ref}
+      onClick={() => onOpen(photo)}
+      className={`
+        group relative rounded-[20px] p-[3px]
+        text-left
+        ${big ? "col-span-2 row-span-2" : ""}
+      `}
+      style={{
+        background: `conic-gradient(from ${frameAngle}deg, ${frameA}, ${frameB}, ${frameC}, ${frameD}, ${frameA})`,
+        boxShadow: isActive
+          ? `0 0 30px ${frameA}55, 0 0 60px ${frameC}30`
+          : `0 0 18px ${frameA}25`,
+        opacity: inView ? 1 : 0,
+        transform: inView
+          ? "translateY(0) scale(1)"
+          : "translateY(32px) scale(0.96)",
+        transitionProperty: "opacity, transform, box-shadow",
+        transitionDuration: "800ms",
+        transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+        transitionDelay: inView ? `${(index % 3) * 90}ms` : "0ms",
+      }}
+    >
+
+      <div className="relative overflow-hidden rounded-[17px] bg-[#050507]">
+
+        <div className="aspect-[4/5] overflow-hidden">
+
+          <img
+            src={photo.url}
+            alt={`Foto ${index + 1}`}
+            loading={index < 5 ? "eager" : "lazy"}
+            className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+          />
+
+        </div>
+
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
+
+        <div className="absolute bottom-4 left-4">
+
+          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/60">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+
+        </div>
+
+      </div>
+
+    </button>
+  );
+}
 
 export default function App() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -198,6 +316,35 @@ export default function App() {
         />
 
       </div>
+
+      {/* ==================================================
+          FILM GRAIN
+      ================================================== */}
+
+      <div
+        className="pointer-events-none fixed inset-0 z-[80] opacity-[0.05] mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+          backgroundSize: "120px 120px",
+          animation: "grain 8s steps(8) infinite",
+        }}
+      />
+
+      <style>{`
+        @keyframes grain {
+          0%, 100% { transform: translate(0, 0); }
+          10% { transform: translate(-2%, -4%); }
+          20% { transform: translate(-6%, 2%); }
+          30% { transform: translate(2%, -6%); }
+          40% { transform: translate(-2%, 6%); }
+          50% { transform: translate(-6%, 4%); }
+          60% { transform: translate(6%, 0); }
+          70% { transform: translate(0, 6%); }
+          80% { transform: translate(-4%, 0); }
+          90% { transform: translate(4%, 4%); }
+        }
+      `}</style>
 
       {/* ==================================================
           WELCOME
@@ -412,66 +559,17 @@ export default function App() {
 
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-8 lg:gap-10">
 
-            {photos.map((photo, index) => {
-
-              const big = index === bigIndex;
-              const isActive = index === activeIndex;
-
-              // Each frame's rainbow rotates at a slightly different
-              // phase so the whole grid doesn't pulse in unison.
-              const frameAngle = (rgb + index * 47) % 360;
-              const frameA = `hsl(${frameAngle}, 100%, 65%)`;
-              const frameB = `hsl(${(frameAngle + 90) % 360}, 100%, 65%)`;
-              const frameC = `hsl(${(frameAngle + 180) % 360}, 100%, 65%)`;
-              const frameD = `hsl(${(frameAngle + 270) % 360}, 100%, 65%)`;
-
-              return (
-                <button
-                  key={photo.public_id}
-                  onClick={() => openPhoto(photo)}
-                  className={`
-                    group relative rounded-[20px] p-[3px]
-                    text-left
-                    transition-all duration-500
-                    hover:-translate-y-1.5
-                    ${big ? "col-span-2 row-span-2" : ""}
-                  `}
-                  style={{
-                    background: `conic-gradient(from ${frameAngle}deg, ${frameA}, ${frameB}, ${frameC}, ${frameD}, ${frameA})`,
-                    boxShadow: isActive
-                      ? `0 0 30px ${frameA}55, 0 0 60px ${frameC}30`
-                      : `0 0 18px ${frameA}25`,
-                  }}
-                >
-
-                  <div className="relative overflow-hidden rounded-[17px] bg-[#050507]">
-
-                    <div className="aspect-[4/5] overflow-hidden">
-
-                      <img
-                        src={photo.url}
-                        alt={`Foto ${index + 1}`}
-                        loading={index < 5 ? "eager" : "lazy"}
-                        className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                      />
-
-                    </div>
-
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
-
-                    <div className="absolute bottom-4 left-4">
-
-                      <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/60">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                </button>
-              );
-            })}
+            {photos.map((photo, index) => (
+              <GalleryItem
+                key={photo.public_id}
+                photo={photo}
+                index={index}
+                big={index === bigIndex}
+                isActive={index === activeIndex}
+                rgb={rgb}
+                onOpen={openPhoto}
+              />
+            ))}
 
           </div>
 
@@ -654,6 +752,16 @@ export default function App() {
           >
             ›
           </button>
+
+          {/* CAPTION — shows if the photo has an optional `caption`
+              field. Add `caption?: string` to your Photo type / data
+              in ./photo.ts to use this. */}
+
+          {(selected as Photo & { caption?: string }).caption && (
+            <div className="absolute bottom-20 left-1/2 z-30 max-w-[85vw] -translate-x-1/2 text-center text-sm text-white/60">
+              {(selected as Photo & { caption?: string }).caption}
+            </div>
+          )}
 
           {/* COUNTER */}
 
