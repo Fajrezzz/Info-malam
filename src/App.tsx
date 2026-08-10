@@ -6,12 +6,13 @@ type Photo = {
   version: number;
   width?: number;
   height?: number;
+  secure_url?: string;
 };
 
 const CLOUD_NAME = "dxkbvpaa1";
-const TAG = "teman";
 
 const getPhotoUrl = (photo: Photo) =>
+  photo.secure_url ||
   `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/f_auto,q_auto/${photo.public_id}.${photo.format}`;
 
 export default function App() {
@@ -21,27 +22,36 @@ export default function App() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [selected, setSelected] = useState<Photo | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [mouse, setMouse] = useState({ x: 50, y: 50 });
+
+  /* =========================
+     LOAD FOTO OTOMATIS
+  ========================= */
 
   useEffect(() => {
     const loadPhotos = async () => {
       try {
         setLoading(true);
+        setError("");
 
-        const response = await fetch(
-          `https://res.cloudinary.com/${CLOUD_NAME}/image/list/${TAG}.json?t=${Date.now()}`
-        );
+        const response = await fetch("/api/photos?t=" + Date.now());
 
         if (!response.ok) {
-          throw new Error("Gagal mengambil daftar foto.");
+          throw new Error("Gagal mengambil foto.");
         }
 
         const data = await response.json();
 
-        setPhotos(data.resources || []);
+        if (!data.resources || !Array.isArray(data.resources)) {
+          throw new Error("Data foto tidak valid.");
+        }
+
+        setPhotos(data.resources);
       } catch (err) {
         console.error(err);
+
         setError(
-          "Foto belum bisa dimuat. Pastikan Resource List Cloudinary sudah aktif."
+          "Foto belum bisa dimuat. Coba refresh website atau cek API Cloudinary."
         );
       } finally {
         setLoading(false);
@@ -52,9 +62,28 @@ export default function App() {
 
     const timer = setTimeout(() => {
       setShowWelcome(false);
-    }, 2000);
+    }, 2200);
 
     return () => clearTimeout(timer);
+  }, []);
+
+  /* =========================
+     MOUSE / TOUCH EFFECT
+  ========================= */
+
+  useEffect(() => {
+    const move = (e: MouseEvent) => {
+      setMouse({
+        x: (e.clientX / window.innerWidth) * 100,
+        y: (e.clientY / window.innerHeight) * 100,
+      });
+    };
+
+    window.addEventListener("mousemove", move);
+
+    return () => {
+      window.removeEventListener("mousemove", move);
+    };
   }, []);
 
   const activePhoto = photos[activeIndex];
@@ -68,6 +97,10 @@ export default function App() {
     ];
   }, [photos, activeIndex]);
 
+  /* =========================
+     RANDOM PHOTO
+  ========================= */
+
   const randomPhoto = () => {
     if (photos.length < 2) return;
 
@@ -78,97 +111,159 @@ export default function App() {
     }
 
     setActiveIndex(next);
+
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
   };
 
+  /* =========================
+     LOADING
+  ========================= */
+
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#070707] text-white grid place-items-center">
+      <main className="min-h-screen bg-[#050505] text-white grid place-items-center">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-white/20 border-t-white" />
 
-          <p className="mt-6 text-xs uppercase tracking-[0.4em] text-white/40">
-            Memuat foto...
+          <div className="relative mx-auto h-16 w-16">
+            <div className="absolute inset-0 rounded-full border border-white/10" />
+
+            <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-white" />
+
+            <div className="absolute inset-3 animate-pulse rounded-full bg-white/10" />
+          </div>
+
+          <p className="mt-7 text-[10px] uppercase tracking-[0.5em] text-white/40">
+            Loading memories
           </p>
+
+          <p className="mt-3 text-xs text-white/20">
+            Mengambil foto dari Cloudinary...
+          </p>
+
         </div>
       </main>
     );
   }
 
+  /* =========================
+     ERROR
+  ========================= */
+
   if (error) {
     return (
-      <main className="min-h-screen bg-[#070707] text-white grid place-items-center px-6">
+      <main className="min-h-screen bg-[#050505] text-white grid place-items-center px-6">
+
         <div className="max-w-md text-center">
-          <p className="text-xs uppercase tracking-[0.4em] text-white/30">
-            Info Malam
+
+          <p className="text-[10px] uppercase tracking-[0.5em] text-white/30">
+            INFO MALAM
           </p>
 
           <h1 className="mt-5 text-4xl font-black">
             Foto belum muncul
           </h1>
 
-          <p className="mt-4 text-sm leading-7 text-white/45">
+          <p className="mt-5 text-sm leading-7 text-white/40">
             {error}
           </p>
 
           <button
             onClick={() => window.location.reload()}
-            className="mt-7 rounded-full bg-white px-6 py-3 text-xs font-black uppercase tracking-[0.2em] text-black"
+            className="mt-8 rounded-full bg-white px-7 py-4 text-[10px] font-black uppercase tracking-[0.25em] text-black transition hover:scale-105"
           >
             Coba lagi
           </button>
+
         </div>
+
       </main>
     );
   }
 
+  /* =========================
+     EMPTY
+  ========================= */
+
   if (!photos.length) {
     return (
-      <main className="min-h-screen bg-[#070707] text-white grid place-items-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-black">Belum ada foto</h1>
+      <main className="min-h-screen bg-[#050505] text-white grid place-items-center">
 
-          <p className="mt-4 text-white/40">
-            Pastikan foto sudah memiliki tag "teman".
+        <div className="text-center">
+
+          <p className="text-[10px] uppercase tracking-[0.5em] text-white/30">
+            INFO MALAM
           </p>
+
+          <h1 className="mt-5 text-4xl font-black">
+            Belum ada foto
+          </h1>
+
+          <p className="mt-4 text-sm text-white/40">
+            Pastikan foto memiliki tag "teman".
+          </p>
+
         </div>
+
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#070707] text-white">
+    <main
+      className="min-h-screen overflow-x-hidden bg-[#050505] text-white"
+      style={{
+        backgroundImage: `
+          radial-gradient(
+            circle at ${mouse.x}% ${mouse.y}%,
+            rgba(255,255,255,0.07),
+            transparent 25%
+          )
+        `,
+      }}
+    >
 
-      {/* WELCOME */}
+      {/* =========================
+          WELCOME
+      ========================= */}
 
       {showWelcome && (
-        <section className="fixed inset-0 z-[100] grid place-items-center bg-[#070707]">
-          <div className="px-6 text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.5em] text-white/35">
+        <section className="fixed inset-0 z-[100] grid place-items-center bg-[#050505]">
+
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-white/[0.03] blur-3xl" />
+          </div>
+
+          <div className="relative px-6 text-center">
+
+            <p className="text-[10px] font-bold uppercase tracking-[0.6em] text-white/30">
               2026 / Indonesia
             </p>
 
-            <h1 className="mt-6 text-6xl font-black leading-[0.8] tracking-[-0.08em] sm:text-8xl">
+            <h1 className="mt-7 text-6xl font-black leading-[0.78] tracking-[-0.09em] sm:text-8xl">
               Info
               <br />
               Malam.
             </h1>
 
-            <div className="mx-auto mt-8 h-px w-20 bg-white/30" />
+            <div className="mx-auto mt-9 h-px w-20 bg-white/30" />
 
-            <p className="mt-5 text-xs uppercase tracking-[0.35em] text-white/30">
+            <p className="mt-6 text-[10px] uppercase tracking-[0.4em] text-white/30">
               Memories after dark
             </p>
+
           </div>
         </section>
       )}
 
-      {/* NAVBAR */}
+      {/* =========================
+          NAVBAR
+      ========================= */}
 
       <nav className="fixed left-0 right-0 top-0 z-40 px-4 py-4 sm:px-8">
+
         <div className="mx-auto flex max-w-7xl items-center justify-between rounded-full border border-white/10 bg-black/40 px-5 py-3 backdrop-blur-xl">
 
           <a
@@ -178,15 +273,28 @@ export default function App() {
             Info Malam
           </a>
 
-          <div className="flex items-center gap-5 text-[10px] font-bold uppercase tracking-[0.25em] text-white/45">
-            <a href="#gallery">Gallery</a>
-            <span>{photos.length} Photos</span>
+          <div className="flex items-center gap-5 text-[10px] font-bold uppercase tracking-[0.25em] text-white/40">
+
+            <a
+              href="#gallery"
+              className="transition hover:text-white"
+            >
+              Gallery
+            </a>
+
+            <span>
+              {photos.length} Photos
+            </span>
+
           </div>
 
         </div>
+
       </nav>
 
-      {/* HERO */}
+      {/* =========================
+          HERO
+      ========================= */}
 
       <section
         id="home"
@@ -201,11 +309,16 @@ export default function App() {
 
         <div className="absolute inset-0 bg-black/35" />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-[#070707] via-black/25 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/30 to-black/10" />
+
+        {/* GRAIN */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.035] mix-blend-overlay">
+          <div className="h-full w-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+        </div>
 
         <div className="relative z-10 mx-auto w-full max-w-7xl">
 
-          <p className="mb-5 text-xs font-bold uppercase tracking-[0.5em] text-white/50">
+          <p className="mb-5 text-[10px] font-bold uppercase tracking-[0.5em] text-white/50">
             2026 / Indonesia
           </p>
 
@@ -224,7 +337,7 @@ export default function App() {
 
             <button
               onClick={randomPhoto}
-              className="w-fit rounded-full bg-white px-7 py-4 text-xs font-black uppercase tracking-[0.22em] text-black transition hover:-translate-y-1 hover:bg-white/85"
+              className="w-fit rounded-full bg-white px-7 py-4 text-xs font-black uppercase tracking-[0.22em] text-black transition hover:-translate-y-1 hover:scale-105"
             >
               Foto Acak ↗
             </button>
@@ -234,18 +347,20 @@ export default function App() {
         </div>
       </section>
 
-      {/* INTRO */}
+      {/* =========================
+          INTRO
+      ========================= */}
 
       <section className="border-y border-white/10 px-5 py-20 sm:px-8 lg:px-14 lg:py-28">
 
         <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-3">
 
-          <div>
+          <div className="group">
             <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/30">
               Archive
             </p>
 
-            <p className="mt-4 text-5xl font-black">
+            <p className="mt-4 text-5xl font-black transition group-hover:translate-x-2">
               {photos.length}
             </p>
 
@@ -254,7 +369,7 @@ export default function App() {
             </p>
           </div>
 
-          <div>
+          <div className="group">
             <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/30">
               Collection
             </p>
@@ -268,7 +383,7 @@ export default function App() {
             </p>
           </div>
 
-          <div>
+          <div className="group">
             <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/30">
               Status
             </p>
@@ -286,7 +401,9 @@ export default function App() {
 
       </section>
 
-      {/* GALLERY */}
+      {/* =========================
+          GALLERY
+      ========================= */}
 
       <section
         id="gallery"
@@ -298,6 +415,7 @@ export default function App() {
           <div className="mb-10 flex items-end justify-between">
 
             <div>
+
               <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/30">
                 02 — Gallery
               </p>
@@ -307,6 +425,7 @@ export default function App() {
                 <br />
                 cerita.
               </h2>
+
             </div>
 
             <button
@@ -345,12 +464,12 @@ export default function App() {
                     src={getPhotoUrl(photo)}
                     alt={`Foto ${index + 1}`}
                     loading={index < 5 ? "eager" : "lazy"}
-                    className="h-full min-h-48 w-full object-cover transition duration-700 group-hover:scale-105"
+                    className="h-full min-h-48 w-full object-cover transition duration-700 group-hover:scale-110"
                   />
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
 
-                  <div className="absolute bottom-4 left-4 opacity-0 transition group-hover:opacity-100">
+                  <div className="absolute bottom-4 left-4 translate-y-3 opacity-0 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100">
 
                     <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/70">
                       {isActive ? "Now viewing" : "Open photo"}
@@ -368,7 +487,9 @@ export default function App() {
 
       </section>
 
-      {/* FEATURED */}
+      {/* =========================
+          FEATURED
+      ========================= */}
 
       <section className="border-t border-white/10 px-5 py-24 sm:px-8 lg:px-14 lg:py-36">
 
@@ -392,7 +513,7 @@ export default function App() {
 
             <button
               onClick={() => setSelected(activePhoto)}
-              className="mt-7 rounded-full bg-white px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-black"
+              className="mt-7 rounded-full bg-white px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-black transition hover:scale-105"
             >
               Buka fullscreen
             </button>
@@ -407,7 +528,7 @@ export default function App() {
             <img
               src={getPhotoUrl(activePhoto)}
               alt="Featured"
-              className="max-h-[75vh] w-full object-cover transition duration-700 group-hover:scale-[1.02]"
+              className="max-h-[75vh] w-full object-cover transition duration-700 group-hover:scale-[1.03]"
             />
 
           </button>
@@ -416,7 +537,9 @@ export default function App() {
 
       </section>
 
-      {/* FOOTER */}
+      {/* =========================
+          FOOTER
+      ========================= */}
 
       <footer className="border-t border-white/10 px-5 py-12 sm:px-8 lg:px-14">
 
@@ -434,7 +557,9 @@ export default function App() {
 
       </footer>
 
-      {/* LIGHTBOX */}
+      {/* =========================
+          LIGHTBOX
+      ========================= */}
 
       {selected && (
         <div
@@ -444,7 +569,7 @@ export default function App() {
 
           <button
             onClick={() => setSelected(null)}
-            className="absolute right-5 top-5 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-xs font-bold uppercase tracking-widest backdrop-blur-md"
+            className="absolute right-5 top-5 z-10 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-xs font-bold uppercase tracking-widest backdrop-blur-md transition hover:bg-white hover:text-black"
           >
             Tutup ×
           </button>
