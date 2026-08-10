@@ -30,12 +30,11 @@ function useInView<T extends HTMLElement>() {
 }
 
 /* =========================
-   GALLERY ITEM
+   GALLERY ITEM (tanpa big)
 ========================= */
 const GalleryItem = memo(function GalleryItem({
   photo,
   index,
-  big,
   isActive,
   rgb,
   onOpen,
@@ -43,7 +42,6 @@ const GalleryItem = memo(function GalleryItem({
 }: {
   photo: Photo;
   index: number;
-  big: boolean;
   isActive: boolean;
   rgb: number;
   onOpen: (photo: Photo) => void;
@@ -69,9 +67,7 @@ const GalleryItem = memo(function GalleryItem({
       ref={ref}
       onClick={() => onOpen(photo)}
       aria-label={`Lihat foto ${index + 1}`}
-      className={`group relative rounded-[20px] p-[3px] text-left ${
-        big ? "col-span-2 row-span-2" : ""
-      }`}
+      className="group relative rounded-[20px] p-[3px] text-left"
       style={{
         background: `conic-gradient(from ${frameAngle}deg, ${frameA}, ${frameB}, ${frameC}, ${frameD}, ${frameA})`,
         boxShadow: isActive
@@ -82,9 +78,9 @@ const GalleryItem = memo(function GalleryItem({
           ? "translateY(0) scale(1)"
           : "translateY(18px) scale(0.98)",
         transitionProperty: "opacity, transform, box-shadow",
-        transitionDuration: "300ms",  // lebih cepat
+        transitionDuration: "300ms",
         transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-        transitionDelay: inView ? `${(index % 3) * 20}ms` : "0ms",  // lebih pendek
+        transitionDelay: inView ? `${(index % 3) * 20}ms` : "0ms",
       }}
     >
       <div className="relative overflow-hidden rounded-[17px] bg-[#050507]">
@@ -114,7 +110,7 @@ const GalleryItem = memo(function GalleryItem({
 });
 
 /* =========================
-   STORY BAR (Instagram-like)
+   STORY BAR
 ========================= */
 function StoryBar({
   photos,
@@ -182,6 +178,36 @@ function StoryBar({
 }
 
 /* =========================
+   SPEAKER ICON SVG
+========================= */
+function SpeakerIcon({ playing }: { playing: boolean }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="transition-colors"
+    >
+      <path d="M11 5L6 9H2v6h4l5 4V5z" />
+      {playing && (
+        <>
+          <path d="M15.54 8.46a5 5 0 010 7.07" />
+          <path d="M19.07 4.93a10 10 0 010 14.14" />
+        </>
+      )}
+      {!playing && (
+        <line x1="23" y1="9" x2="17" y2="15" />
+      )}
+    </svg>
+  );
+}
+
+/* =========================
    APP
 ========================= */
 export default function App() {
@@ -193,7 +219,7 @@ export default function App() {
   const [scrollY, setScrollY] = useState(0);
   const [visibleIndices, setVisibleIndices] = useState<Set<number>>(new Set());
 
-  // Fitur musik
+  // Musik
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -207,7 +233,7 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // RGB Animation
+  // RGB
   useEffect(() => {
     let frame: number;
     const animate = () => {
@@ -229,10 +255,9 @@ export default function App() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Keyboard (lightbox + easter egg)
+  // Keyboard
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      // Lightbox
       if (selected) {
         if (e.key === "Escape") setSelected(null);
         if (e.key === "ArrowRight") nextPhoto();
@@ -240,7 +265,6 @@ export default function App() {
         return;
       }
 
-      // Easter egg: deteksi "MALAM"
       const key = e.key.toUpperCase();
       if (key === "M" || key === "A" || key === "L") {
         setTypedBuffer((prev) => {
@@ -262,7 +286,6 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKey);
   }, [selected, activeIndex]);
 
-  // Music toggle
   const toggleMusic = () => {
     if (!audioRef.current) {
       audioRef.current = new Audio("/night-ambience.mp3");
@@ -277,7 +300,6 @@ export default function App() {
     setIsMusicPlaying(!isMusicPlaying);
   };
 
-  // Visible callback
   const handleVisible = useCallback((index: number) => {
     setVisibleIndices((prev) => {
       if (prev.has(index)) return prev;
@@ -287,11 +309,9 @@ export default function App() {
     });
   }, []);
 
-  // Colors
   const color1 = `hsl(${rgb}, 100%, 65%)`;
   const color2 = `hsl(${(rgb + 110) % 360}, 100%, 65%)`;
 
-  // Stars
   const stars = useMemo(() => {
     return Array.from({ length: 50 }, (_, i) => ({
       id: i,
@@ -319,7 +339,6 @@ export default function App() {
   }
 
   const activePhoto = photos[activeIndex];
-  const bigIndex = 0;
 
   const randomPhoto = () => {
     let next = Math.floor(Math.random() * photos.length);
@@ -348,7 +367,6 @@ export default function App() {
     setSelected(photo);
   };
 
-  // Kartu pos (download)
   const downloadPostcard = () => {
     if (!selected) return;
     const canvas = document.createElement("canvas");
@@ -406,11 +424,20 @@ export default function App() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#050507] text-white">
-      {/* Ambient RGB */}
+      {/* Ambient */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full blur-[160px] opacity-[0.08]" style={{ background: color1 }} />
-        <div className="absolute -right-40 top-[40%] h-[500px] w-[500px] rounded-full blur-[160px] opacity-[0.07]" style={{ background: color2 }} />
-        <div className="absolute bottom-[-250px] left-[30%] h-[500px] w-[500px] rounded-full blur-[160px] opacity-[0.05]" style={{ background: color1 }} />
+        <div
+          className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full blur-[160px] opacity-[0.08]"
+          style={{ background: color1 }}
+        />
+        <div
+          className="absolute -right-40 top-[40%] h-[500px] w-[500px] rounded-full blur-[160px] opacity-[0.07]"
+          style={{ background: color2 }}
+        />
+        <div
+          className="absolute bottom-[-250px] left-[30%] h-[500px] w-[500px] rounded-full blur-[160px] opacity-[0.05]"
+          style={{ background: color1 }}
+        />
       </div>
 
       {/* Stars */}
@@ -434,7 +461,8 @@ export default function App() {
       <div
         className="pointer-events-none fixed inset-0 z-[80] opacity-[0.05] mix-blend-overlay"
         style={{
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
           backgroundSize: "120px 120px",
           animation: "grain 8s steps(8) infinite",
         }}
@@ -491,30 +519,55 @@ export default function App() {
       {/* Welcome */}
       {showWelcome && (
         <div className="fixed inset-0 z-[999] grid place-items-center bg-[#050507]">
-          <div className="absolute h-80 w-80 rounded-full blur-[130px] opacity-10" style={{ background: color1 }} />
+          <div
+            className="absolute h-80 w-80 rounded-full blur-[130px] opacity-10"
+            style={{ background: color1 }}
+          />
           <div className="relative text-center">
-            <p className="text-[10px] uppercase tracking-[0.7em] text-white/30">2026 / Indonesia</p>
-            <h1 className="mt-7 text-6xl font-black leading-[0.8] tracking-[-0.09em] sm:text-8xl" style={{ textShadow: `0 0 35px ${color1}30` }}>
-              Info<br />Malam.
+            <p className="text-[10px] uppercase tracking-[0.7em] text-white/30">
+              2026 / Indonesia
+            </p>
+            <h1
+              className="mt-7 text-6xl font-black leading-[0.8] tracking-[-0.09em] sm:text-8xl"
+              style={{ textShadow: `0 0 35px ${color1}30` }}
+            >
+              Info
+              <br />
+              Malam.
             </h1>
-            <div className="mx-auto mt-9 h-px w-20" style={{ background: `linear-gradient(90deg, ${color1}, ${color2})` }} />
-            <p className="mt-6 text-[10px] uppercase tracking-[0.5em] text-white/30">Memories after dark</p>
+            <div
+              className="mx-auto mt-9 h-px w-20"
+              style={{
+                background: `linear-gradient(90deg, ${color1}, ${color2})`,
+              }}
+            />
+            <p className="mt-6 text-[10px] uppercase tracking-[0.5em] text-white/30">
+              Memories after dark
+            </p>
           </div>
         </div>
       )}
 
-      {/* Navbar dengan tombol musik di kanan atas */}
-      <nav className={`fixed left-0 right-0 top-0 z-50 px-4 py-4 sm:px-8 transition-all duration-500 ${showTop ? "bg-black/70 backdrop-blur-xl" : "bg-transparent"}`}>
+      {/* Navbar dengan tombol musik besar di kanan atas */}
+      <nav
+        className={`fixed left-0 right-0 top-0 z-50 px-4 py-4 sm:px-8 transition-all duration-500 ${
+          showTop ? "bg-black/70 backdrop-blur-xl" : "bg-transparent"
+        }`}
+      >
         <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <a href="#home" className="text-[11px] font-black uppercase tracking-[0.4em] text-white/80" aria-label="Kembali ke atas">
+          <a
+            href="#home"
+            className="text-[11px] font-black uppercase tracking-[0.4em] text-white/80"
+            aria-label="Kembali ke atas"
+          >
             Info Malam
           </a>
           <button
             onClick={toggleMusic}
             aria-label={isMusicPlaying ? "Matikan musik" : "Nyalakan musik"}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/70 backdrop-blur-xl transition hover:text-white"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/80 backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
           >
-            {isMusicPlaying ? "🔊" : "🔇"}
+            <SpeakerIcon playing={isMusicPlaying} />
           </button>
         </div>
       </nav>
@@ -542,7 +595,10 @@ export default function App() {
       )}
 
       {/* Hero */}
-      <section id="home" className="relative z-10 flex min-h-screen items-end overflow-hidden px-5 pb-16 pt-32 sm:px-8 lg:px-14 lg:pb-20">
+      <section
+        id="home"
+        className="relative z-10 flex min-h-screen items-end overflow-hidden px-5 pb-16 pt-32 sm:px-8 lg:px-14 lg:pb-20"
+      >
         <img
           src={activePhoto.url}
           alt={activePhoto.public_id}
@@ -550,26 +606,52 @@ export default function App() {
           style={{ transform: `translateY(${scrollY * 0.2}px)` }}
         />
         <div className="absolute inset-0 bg-black/50" />
-        <div className="absolute inset-0 opacity-20" style={{ background: `linear-gradient(135deg, ${color1}, transparent 40%, ${color2})` }} />
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            background: `linear-gradient(135deg, ${color1}, transparent 40%, ${color2})`,
+          }}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-black/30 to-transparent" />
         <div className="relative z-10 mx-auto w-full max-w-7xl">
           <div className="mb-5 flex items-center gap-3">
-            <span className="h-2 w-2 animate-pulse rounded-full" style={{ background: color1, boxShadow: `0 0 15px ${color1}` }} />
-            <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-white/40">2026 / Indonesia</p>
+            <span
+              className="h-2 w-2 animate-pulse rounded-full"
+              style={{ background: color1, boxShadow: `0 0 15px ${color1}` }}
+            />
+            <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-white/40">
+              2026 / Indonesia
+            </p>
           </div>
-          <h1 className="text-[19vw] font-black leading-[0.76] tracking-[-0.09em] sm:text-[13vw] lg:text-[10rem]" style={{ textShadow: `0 0 50px ${color1}20` }}>
-            Malam<br />
-            <span className="inline-block text-white" style={{ textShadow: `0 0 15px ${color1}40, 0 0 35px ${color2}20`, letterSpacing: "-0.04em" }}>Bersama.</span>
+          <h1
+            className="text-[19vw] font-black leading-[0.76] tracking-[-0.09em] sm:text-[13vw] lg:text-[10rem]"
+            style={{ textShadow: `0 0 50px ${color1}20` }}
+          >
+            Malam
+            <br />
+            <span
+              className="inline-block text-white"
+              style={{
+                textShadow: `0 0 15px ${color1}40, 0 0 35px ${color2}20`,
+                letterSpacing: "-0.04em",
+              }}
+            >
+              Bersama.
+            </span>
           </h1>
           <div className="mt-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <p className="max-w-xl text-base leading-7 text-white/50 sm:text-lg">
-              Kumpulan momen, teman, dan cerita yang tersimpan dalam satu arsip malam.
+              Kumpulan momen, teman, dan cerita yang tersimpan dalam satu arsip
+              malam.
             </p>
             <button
               onClick={randomPhoto}
               aria-label="Lihat foto acak"
               className="w-fit rounded-full px-7 py-4 text-xs font-black uppercase tracking-[0.22em] text-black transition hover:-translate-y-1 hover:scale-105"
-              style={{ background: `linear-gradient(90deg, ${color1}, ${color2})`, boxShadow: `0 0 30px ${color1}25` }}
+              style={{
+                background: `linear-gradient(90deg, ${color1}, ${color2})`,
+                boxShadow: `0 0 30px ${color1}25`,
+              }}
             >
               Foto Acak ↗
             </button>
@@ -578,14 +660,27 @@ export default function App() {
       </section>
 
       {/* Gallery + Story Bar */}
-      <section id="gallery" className="relative z-10 px-5 py-20 sm:px-8 lg:px-14 lg:py-32">
+      <section
+        id="gallery"
+        className="relative z-10 px-5 py-20 sm:px-8 lg:px-14 lg:py-32"
+      >
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 flex items-end justify-between">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/25">02 — Gallery</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/25">
+                02 — Gallery
+              </p>
               <h2 className="mt-4 text-5xl font-black tracking-[-0.06em] sm:text-7xl">
-                Semua<br />
-                <span style={{ color: color1, textShadow: `0 0 25px ${color1}25` }}>cerita.</span>
+                Semua
+                <br />
+                <span
+                  style={{
+                    color: color1,
+                    textShadow: `0 0 25px ${color1}25`,
+                  }}
+                >
+                  cerita.
+                </span>
               </h2>
             </div>
             <button
@@ -597,17 +692,21 @@ export default function App() {
             </button>
           </div>
 
-          {/* Story Bar - 15 foto pertama */}
-          <StoryBar photos={photos} activeIndex={activeIndex} rgb={rgb} onSelect={openPhoto} />
+          {/* Story Bar */}
+          <StoryBar
+            photos={photos}
+            activeIndex={activeIndex}
+            rgb={rgb}
+            onSelect={openPhoto}
+          />
 
-          {/* Grid foto */}
+          {/* Grid semua foto seragam, tidak ada big */}
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-8 lg:gap-10">
             {photos.map((photo, index) => (
               <GalleryItem
                 key={photo.public_id}
                 photo={photo}
                 index={index}
-                big={index === bigIndex}
                 isActive={index === activeIndex}
                 rgb={rgb}
                 onOpen={openPhoto}
@@ -638,23 +737,46 @@ export default function App() {
       <section className="relative z-10 border-t border-white/10 px-5 py-24 sm:px-8 lg:px-14 lg:py-32">
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.35fr_1fr] lg:items-center">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/25">03 — Featured</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/25">
+              03 — Featured
+            </p>
             <h2 className="mt-5 text-5xl font-black tracking-[-0.06em] sm:text-7xl">
-              Moment<br />
-              <span style={{ color: color2, textShadow: `0 0 25px ${color2}25` }}>#{String(activeIndex + 1).padStart(2, "0")}</span>
+              Moment
+              <br />
+              <span
+                style={{
+                  color: color2,
+                  textShadow: `0 0 25px ${color2}25`,
+                }}
+              >
+                #{String(activeIndex + 1).padStart(2, "0")}
+              </span>
             </h2>
-            <p className="mt-5 max-w-sm text-sm leading-7 text-white/35">Foto yang sedang kamu lihat dari koleksi malam ini.</p>
+            <p className="mt-5 max-w-sm text-sm leading-7 text-white/35">
+              Foto yang sedang kamu lihat dari koleksi malam ini.
+            </p>
             <button
               onClick={() => setSelected(activePhoto)}
               aria-label="Buka foto featured dalam fullscreen"
               className="mt-7 rounded-full px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-black transition hover:scale-105"
-              style={{ background: `linear-gradient(90deg, ${color1}, ${color2})`, boxShadow: `0 0 30px ${color1}20` }}
+              style={{
+                background: `linear-gradient(90deg, ${color1}, ${color2})`,
+                boxShadow: `0 0 30px ${color1}20`,
+              }}
             >
               Buka fullscreen
             </button>
           </div>
-          <button onClick={() => setSelected(activePhoto)} aria-label="Lihat foto featured" className="group overflow-hidden rounded-3xl border border-white/10">
-            <img src={activePhoto.url} alt="Featured" className="max-h-[75vh] w-full object-cover transition duration-700 group-hover:scale-[1.03]" />
+          <button
+            onClick={() => setSelected(activePhoto)}
+            aria-label="Lihat foto featured"
+            className="group overflow-hidden rounded-3xl border border-white/10"
+          >
+            <img
+              src={activePhoto.url}
+              alt="Featured"
+              className="max-h-[75vh] w-full object-cover transition duration-700 group-hover:scale-[1.03]"
+            />
           </button>
         </div>
       </section>
@@ -664,8 +786,13 @@ export default function App() {
         <div className="mx-auto flex max-w-7xl flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-lg font-black">Info Malam.</p>
           <div className="flex items-center gap-3">
-            <span className="h-2 w-2 animate-pulse rounded-full" style={{ background: color1, boxShadow: `0 0 15px ${color1}` }} />
-            <p className="text-[10px] uppercase tracking-[0.3em] text-white/20">Made from memories — 2026</p>
+            <span
+              className="h-2 w-2 animate-pulse rounded-full"
+              style={{ background: color1, boxShadow: `0 0 15px ${color1}` }}
+            />
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/20">
+              Made from memories — 2026
+            </p>
           </div>
         </div>
       </footer>
@@ -728,7 +855,8 @@ function Lightbox({
   }, [selected.public_id]);
 
   useEffect(() => {
-    const fullCaption = (selected as Photo & { caption?: string }).caption || "";
+    const fullCaption =
+      (selected as Photo & { caption?: string }).caption || "";
     if (!fullCaption) {
       setDisplayedCaption("");
       return;
@@ -744,15 +872,34 @@ function Lightbox({
   }, [selected.public_id]);
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/95 p-4 backdrop-blur-2xl" onClick={onClose}>
-      <div className="absolute inset-0 opacity-[0.08]" style={{ background: `radial-gradient(circle at center, ${color1}, transparent 60%)` }} />
+    <div
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/95 p-4 backdrop-blur-2xl"
+      onClick={onClose}
+    >
+      <div
+        className="absolute inset-0 opacity-[0.08]"
+        style={{
+          background: `radial-gradient(circle at center, ${color1}, transparent 60%)`,
+        }}
+      />
       <div key={glitchKey} className="glitch-overlay" />
 
-      <button onClick={onClose} aria-label="Tutup lightbox" className="absolute right-5 top-5 z-30 rounded-full border border-white/10 bg-black/60 px-5 py-3 text-xs font-bold uppercase tracking-widest text-white/70 backdrop-blur-xl">
+      <button
+        onClick={onClose}
+        aria-label="Tutup lightbox"
+        className="absolute right-5 top-5 z-30 rounded-full border border-white/10 bg-black/60 px-5 py-3 text-xs font-bold uppercase tracking-widest text-white/70 backdrop-blur-xl"
+      >
         Tutup ×
       </button>
 
-      <button onClick={(e) => { e.stopPropagation(); onPrev(); }} aria-label="Foto sebelumnya" className="absolute left-3 z-30 rounded-full border border-white/10 bg-black/60 px-4 py-3 text-xl text-white/70 backdrop-blur-xl transition hover:text-white sm:left-6">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onPrev();
+        }}
+        aria-label="Foto sebelumnya"
+        className="absolute left-3 z-30 rounded-full border border-white/10 bg-black/60 px-4 py-3 text-xl text-white/70 backdrop-blur-xl transition hover:text-white sm:left-6"
+      >
         ‹
       </button>
 
@@ -764,18 +911,29 @@ function Lightbox({
         style={{ boxShadow: `0 0 80px ${color1}15` }}
       />
 
-      <button onClick={(e) => { e.stopPropagation(); onNext(); }} aria-label="Foto selanjutnya" className="absolute right-3 z-30 rounded-full border border-white/10 bg-black/60 px-4 py-3 text-xl text-white/70 backdrop-blur-xl transition hover:text-white sm:right-6">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onNext();
+        }}
+        aria-label="Foto selanjutnya"
+        className="absolute right-3 z-30 rounded-full border border-white/10 bg-black/60 px-4 py-3 text-xl text-white/70 backdrop-blur-xl transition hover:text-white sm:right-6"
+      >
         ›
       </button>
 
       {displayedCaption && (
         <div className="absolute bottom-20 left-1/2 z-30 max-w-[85vw] -translate-x-1/2 text-center text-sm text-white/60 italic">
-          {displayedCaption}<span className="animate-pulse">|</span>
+          {displayedCaption}
+          <span className="animate-pulse">|</span>
         </div>
       )}
 
       <button
-        onClick={(e) => { e.stopPropagation(); onDownload(); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDownload();
+        }}
         aria-label="Download kartu pos"
         className="absolute bottom-6 left-6 z-30 rounded-full border border-white/10 bg-black/60 px-4 py-2 text-xs font-bold uppercase tracking-widest text-white/70 backdrop-blur-xl transition hover:text-white"
       >
@@ -783,7 +941,8 @@ function Lightbox({
       </button>
 
       <div className="absolute bottom-6 right-6 z-30 rounded-full border border-white/10 bg-black/60 px-5 py-2 text-[10px] font-bold tracking-[0.3em] text-white/50 backdrop-blur-xl">
-        {String(activeIndex + 1).padStart(2, "0")} / {String(photos.length).padStart(2, "0")}
+        {String(activeIndex + 1).padStart(2, "0")} /{" "}
+        {String(photos.length).padStart(2, "0")}
       </div>
     </div>
   );
