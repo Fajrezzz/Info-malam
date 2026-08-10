@@ -23,7 +23,7 @@ function useInView<T extends HTMLElement>() {
           observer.unobserve(el);
         }
       },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+      { threshold: 0.05, rootMargin: "0px 0px -10% 0px" }
     );
 
     observer.observe(el);
@@ -82,11 +82,11 @@ function GalleryItem({
         opacity: inView ? 1 : 0,
         transform: inView
           ? "translateY(0) scale(1)"
-          : "translateY(32px) scale(0.96)",
+          : "translateY(18px) scale(0.98)",
         transitionProperty: "opacity, transform, box-shadow",
-        transitionDuration: "800ms",
+        transitionDuration: "420ms",
         transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-        transitionDelay: inView ? `${(index % 3) * 90}ms` : "0ms",
+        transitionDelay: inView ? `${(index % 3) * 40}ms` : "0ms",
       }}
     >
 
@@ -207,6 +207,22 @@ export default function App() {
   const color2 = `hsl(${(rgb + 110) % 360}, 100%, 65%)`;
 
   /* =========================
+     STARS
+     Generated once so they don't jump around on re-render.
+  ========================= */
+
+  const stars = useMemo(() => {
+    return Array.from({ length: 50 }, (_, i) => ({
+      id: i,
+      top: Math.random() * 100,
+      left: Math.random() * 100,
+      size: Math.random() * 1.6 + 0.6,
+      delay: Math.random() * 6,
+      duration: Math.random() * 3 + 2.5,
+    }));
+  }, []);
+
+  /* =========================
      GUARD: NO PHOTOS
   ========================= */
 
@@ -318,6 +334,28 @@ export default function App() {
       </div>
 
       {/* ==================================================
+          STARS
+      ================================================== */}
+
+      <div className="pointer-events-none fixed inset-0 z-[1] overflow-hidden">
+
+        {stars.map((star) => (
+          <div
+            key={star.id}
+            className="absolute rounded-full bg-white"
+            style={{
+              top: `${star.top}%`,
+              left: `${star.left}%`,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              animation: `twinkle ${star.duration}s ease-in-out ${star.delay}s infinite`,
+            }}
+          />
+        ))}
+
+      </div>
+
+      {/* ==================================================
           FILM GRAIN
       ================================================== */}
 
@@ -343,6 +381,11 @@ export default function App() {
           70% { transform: translate(0, 6%); }
           80% { transform: translate(-4%, 0); }
           90% { transform: translate(4%, 4%); }
+        }
+
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.15; transform: scale(1); }
+          50% { opacity: 0.9; transform: scale(1.4); }
         }
       `}</style>
 
